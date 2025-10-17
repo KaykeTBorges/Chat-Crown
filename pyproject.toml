@@ -20,6 +20,8 @@ dependencies = [
     "groq>=0.4.1",
     "pydantic>=2.5.0",
     "pydantic-settings>=2.0.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
 ]
 
 [project.optional-dependencies]
@@ -46,3 +48,12 @@ ignore = ["E501"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
+[tool.hatch.build.targets.wheel]
+packages = [
+  "bot",
+  "database",
+  "models",
+  "repositories",
+  "services"
+]
+include = ["config.py", "main.py"]
