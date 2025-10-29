@@ -1,59 +1,40 @@
 [project]
-name = "chat-crown"
+name = "kayke-finance-app"
 version = "0.1.0"
-description = "Bot de Telegram para controle financeiro pessoal"
-readme = "README.md"
-requires-python = ">=3.11"
-license = { text = "MIT" }
+description = "Personal finance assistant with Telegram bot and Breno Nogueira methodology"
 authors = [
-    { name = "Luigi Schmitt", email = "luigi@example.com" },
-    { name = "Kayke Borges", email = "kayke@example.com" }
+    {name = "Kayke", email = "your-email@example.com"},
 ]
+requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.104.1",
-    "uvicorn[standard]>=0.24.0",
     "python-telegram-bot>=20.7",
+    "fastapi>=0.104.1",
+    "uvicorn>=0.24.0",
     "sqlalchemy>=2.0.23",
-    "psycopg2-binary>=2.9.9",
+    "psycopg2-binary>=2.9.7",
     "alembic>=1.12.1",
+    "streamlit>=1.28.0",
+    "plotly>=5.17.0",
+    "pandas>=2.1.0",
+    "groq>=0.3.0",
     "python-dotenv>=1.0.0",
-    "groq>=0.4.1",
-    "pydantic>=2.5.0",
-    "pydantic-settings>=2.0.0",
-    "pytest>=8.4.2",
-    "pytest-asyncio>=1.2.0",
+    "python-dateutil>=2.8.2",
+    "pydantic-settings>=2.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.3",
-    "pytest-asyncio>=0.21.1",
-    "httpx>=0.25.2",
-    "ruff>=0.1.6",
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.ruff]
-line-length = 100
-target-version = "py311"
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "N", "W"]
-ignore = ["E501"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-
 [tool.hatch.build.targets.wheel]
-packages = [
-  "bot",
-  "database",
-  "models",
-  "repositories",
-  "services"
-]
-include = ["config.py", "main.py"]
+packages = ["src/kayke_finance_app"]
+
+# REMOVA completamente a seção [tool.uv.dependency-groups]
+# O UV usa [project.optional-dependencies] automaticamente

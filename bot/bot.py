@@ -1,80 +1,60 @@
-# bot.py
 import logging
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
-from telegram import BotCommand
+from config import config
 
-# Handlers dos comandos
-from bot.handlers.start import start
-from bot.handlers.help import ajuda
-from bot.handlers.summary_handler import resumo
-from bot.handlers.expense_handler import handle_expense  # handler de gastos
-
-# Configurações
-from config import settings
-
-# =====================
-# 🔹 Configuração de logging
-# =====================
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO
+# Importando os handlers
+from bot.handlers import (
+    start_handler,
+    help_handler,
+    summary_handler,
+    message_handler
 )
+
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=getattr(logging, config.LOG_LEVEL)
+)
+
 logger = logging.getLogger(__name__)
 
-# =====================
-# 🔹 Função para criar a aplicação do bot
-# =====================
-def build_application() -> Application:
-    app = Application.builder().token(settings.telegram_bot_token).build()
-    # ---------------------
-    # Handlers de comandos
-    # ---------------------
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("ajuda", ajuda))
-    app.add_handler(CommandHandler("resumo", resumo))
-    # ---------------------
-    # Handler para mensagens de texto que não são comandos
-    # Todas essas mensagens serão tratadas como possíveis gastos
-    # ---------------------
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_expense))
+class FinanceBot:
+    def __init__(self):
+        self.application = None
+        self.setup_bot()
+    
+    def setup_bot(self):
+        """Configura o bot do Telegram com token e handlers"""
+        try:
+            # Validate config here instead of at import time
+            from config import config
+            config.validate()
+            
+            if not config.TELEGRAM_BOT_TOKEN:
+                raise ValueError("Token do bot Telegram não configurado nas variáveis de ambiente")
+            
+            self.application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
+            self._setup_handlers()
+            logger.info("✅ Bot configurado com sucesso!")
+        except Exception as e:
+            logger.error(f"❌ Erro ao configurar bot: {e}")
+            raise
+    
+    def _setup_handlers(self):
+        """Configura os handlers de comandos e mensagens"""
+        # Handlers de comandos
+        self.application.add_handler(CommandHandler("start", start_handler))
+        self.application.add_handler(CommandHandler("ajuda", help_handler))
+        self.application.add_handler(CommandHandler("resumo", summary_handler))
+        
+        # Handler para mensagens de despesas
+        self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+        
+        logger.info("✅ Handlers do bot configurados")
+    
+    def run(self):
+        """Inicia o bot"""
+        logger.info("🤖 Iniciando bot...")
+        self.application.run_polling()
 
-    return app
-
-# =====================
-# 🔹 Define os comandos do bot (BotFather)
-# =====================
-async def set_bot_commands(app: Application) -> None:
-    """
-    Define os comandos que aparecem no menu do Telegram.
-    """
-    commands = [
-        BotCommand("start", "Iniciar conversa"),
-        BotCommand("ajuda", "Ver ajuda e exemplos"),
-        BotCommand("resumo", "Resumo do mês atual")
-        # Futuramente: /relatorio, /categoria, /editar
-    ]
-    await app.bot.set_my_commands(commands)
-    logger.info("Comandos do bot definidos com sucesso.")
-
-# =====================
-# 🔹 Inicia o bot
-# =====================
-def start_bot() -> None:
-    """
-    Inicializa a aplicação, define comandos e inicia long polling.
-    """
-    app = build_application()
-
-    async def _post_init(_: Application) -> None:
-        await set_bot_commands(app)
-
-    app.post_init = _post_init
-
-    logger.info("Iniciando long polling do bot...")
-    app.run_polling(close_loop=False)
-
-# =====================
-# 🔹 Ponto de entrada
-# =====================
-if __name__ == "__main__":
-    start_bot()
+# Instância global do bot
+bot = FinanceBot()
