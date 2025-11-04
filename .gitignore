@@ -64,3 +64,4 @@ config/config_local.py
 exports/
 reports/
 
+.git/
