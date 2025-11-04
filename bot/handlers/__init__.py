@@ -1,4 +1,4 @@
-# Exportando todos os handlers
+# Exporting all handlers for the Chat Crown project.
 from .start_handler import start_handler
 from .help_handler import help_handler
 from .summary_handler import summary_handler

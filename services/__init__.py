@@ -1,5 +1,5 @@
 """
-Services - Business Logic Layer.
-Contém a lógica de negócio da aplicação.
+Services - Business Logic Layer for the Chat Crown project.
+Contains the business logic for the Chat Crown project.
 """
 

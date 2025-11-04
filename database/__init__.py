@@ -1,4 +1,4 @@
 """
-Database configuration and connection management.
+Database configuration and connection management for the Chat Crown project.
 """
 
