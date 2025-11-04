@@ -1,13 +1,17 @@
 import streamlit as st
 import sys
 import os
-
+from datetime import datetime
 # Adicionar o diretório raiz ao path para importar os serviços
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+from services.database import db_manager
+
+
+
 # Configuração da página
 st.set_page_config(
-    page_title="Sistema Financeiro - Kayke",
+    page_title="Sistema Financeiro - Chat Crown",
     page_icon="💰",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -53,6 +57,33 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Função para buscar user_id a partir do token
+def get_user_id_from_token(token: str):
+    from models.magic_link import MagicLink
+    with db_manager.get_session() as session:
+        magic_link = session.query(MagicLink).filter_by(token=token).first()
+        if magic_link and magic_link.expires_at > datetime.utcnow():
+            return magic_link.user_id
+    return None
+
+# Inicializa user_id na sessão
+if "user_id" not in st.session_state:
+    # Usando a nova API st.query_params
+    token_list = st.query_params.get("token", [None])
+    token = token_list[0] if token_list else None
+
+    if token:
+        user_id = get_user_id_from_token(token)
+        if user_id:
+            st.session_state.user_id = user_id
+        else:
+            st.error("❌ Link inválido ou expirado")
+            st.stop()
+    else:
+        st.error("❌ Você precisa de um token para acessar esta página")
+        st.stop()
+
 
 def main():
     st.sidebar.title("💰 Sistema Financeiro")

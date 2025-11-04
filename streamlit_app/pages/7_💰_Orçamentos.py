@@ -15,7 +15,7 @@ st.set_page_config(page_title="Orçamentos", page_icon="💰", layout="wide")
 
 class BudgetPage:
     def __init__(self):
-        self.user_id = 1
+        self.user_id = st.session_state.user_id
     
     def show_budgets(self):
         st.markdown('<h1 class="main-header">💰 Orçamentos por Categoria</h1>', unsafe_allow_html=True)

@@ -10,6 +10,7 @@ async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 /start - Iniciar o bot
 /ajuda - Esta mensagem de ajuda
 /resumo - Resumo financeiro mensal
+/minhas-transacoes - Link para acessar suas transações
 
 💰 *Registro de Gastos:*
 Apenas escreva naturalmente:

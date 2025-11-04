@@ -12,7 +12,7 @@ st.set_page_config(page_title="Alertas", page_icon="⚡", layout="wide")
 
 class AlertsPage:
     def __init__(self):
-        self.user_id = 1
+        self.user_id = st.session_state.user_id
         self.finance_calc = FinanceCalculator()
     
     def show_alerts(self):

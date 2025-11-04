@@ -14,6 +14,7 @@ from bot.handlers.start_handler import start_handler
 from bot.handlers.help_handler import help_handler
 from bot.handlers.summary_handler import summary_handler
 from bot.handlers.message_handler import message_handler
+from bot.handlers.magic_link_handler import create_magic_link
 
 # Novos handlers adicionados
 from bot.handlers.list_handler import list_transactions_handler
@@ -64,6 +65,7 @@ class FinanceBot:
         self.application.add_handler(CommandHandler("start", start_handler))
         self.application.add_handler(CommandHandler("ajuda", help_handler))
         self.application.add_handler(CommandHandler("resumo", summary_handler))
+        self.application.add_handler(CommandHandler("sistema", create_magic_link))
 
         # ✅ Novo comando de listagem
         self.application.add_handler(CommandHandler("listar", list_transactions_handler))
