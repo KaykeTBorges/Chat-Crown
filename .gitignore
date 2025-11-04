@@ -1,57 +1,66 @@
+# -------------------------
 # Python
+# -------------------------
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-*.egg-info/
-dist/
-build/
-*.egg
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
 
-# Virtual Environment
-.venv/
-venv/
-ENV/
-env/
-
-# uv
-.uv/
-uv.lock
-
-# Environment variables
+# Environments
 .env
+*.env
 .env.local
+venv/
+.venv/
 
-# IDE
+# VSCode / Editor
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 
-# Database
+# Build
+build/
+dist/
+*.egg-info/
+
+# Jupyter
+*.ipynb_checkpoints
+
+# Streamlit cache
+.streamlit/
+**/__streamlit_cache__/
+
+# Local uploads / data files
+uploads/
+tmp/
+temp/
+cache/
+
+# Database Dumps & Backups
 *.db
-*.sqlite
-*.sqlite3
+*.sql
 
-# Logs
-*.log
-logs/
-
-# OS
+# MacOS / Linux / Windows junk
 .DS_Store
 Thumbs.db
 
-# Alembic
-alembic/versions/*.pyc
+# Node (se algum componente lidar com frontend)
+node_modules/
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
+# -------------------------
+# PROJECT SPECIFIC
+# -------------------------
 
-# Temporary files
-*.tmp
-*.bak
+# Arquivos de configuração sensíveis
+config/config_local.py
+
+# CSVs e planilhas importadas
+*.csv
+*.xls
+*.xlsx
+
+# Arquivos exportados pelo sistema
+exports/
+reports/
 

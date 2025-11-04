@@ -1,5 +1,5 @@
 """
-Database connection and session management.
+Database connection and session management for the Chat Crown project.
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker

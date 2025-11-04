@@ -1,4 +1,4 @@
 """
-SQLAlchemy models para o Chat Crown.
+SQLAlchemy models for the Chat Crown project.
 """
 

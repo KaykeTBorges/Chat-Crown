@@ -1,4 +1,4 @@
-# Chat Crown - Finance Control Bot for Telegram
+# Chat Crown - Finance Control Bot for Telegram.
 
 ## Resumo do Projeto
 Bot de Telegram para controle financeiro pessoal onde usuários podem registrar seus gastos através de mensagens naturais. O bot utiliza IA para categorizar automaticamente os gastos e gera relatórios mensais detalhados.
