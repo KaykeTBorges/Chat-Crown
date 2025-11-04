@@ -144,4 +144,15 @@ class FinanceCalculator:
             'total_gasto_variavel_mes': sum(gasto['gasto'] for gasto in situacao_dias)
         }
 
+        def debug_daily_status(self, user_id: int, mes: int = None, ano: int = None):
+            """Método para debug - mostra a estrutura real retornada"""
+            status = self.get_daily_budget_status(user_id, mes, ano)
+            print("🔍 DEBUG - Estrutura do daily_status:")
+            print(f"Keys: {list(status.keys()) if status else 'None'}")
+            if status and 'situacao_dias' in status:
+                print(f"Número de dias: {len(status['situacao_dias'])}")
+                if status['situacao_dias']:
+                    print(f"Primeiro dia: {status['situacao_dias'][0]}")
+            return status
+
 finance_calculator = FinanceCalculator()
