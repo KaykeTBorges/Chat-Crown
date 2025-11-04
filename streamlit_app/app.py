@@ -7,13 +7,13 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 # Configuração da página
 st.set_page_config(
-    page_title="Dashboard Financeiro - Kayke",
+    page_title="Sistema Financeiro - Kayke",
     page_icon="💰",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# CSS personalizado
+# CSS personalizado melhorado
 st.markdown("""
 <style>
     .main-header {
@@ -21,51 +21,128 @@ st.markdown("""
         color: #1f77b4;
         text-align: center;
         margin-bottom: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     .metric-card {
         background-color: #f0f2f6;
         padding: 1rem;
         border-radius: 10px;
         border-left: 5px solid #1f77b4;
+        transition: all 0.3s ease;
     }
-    .alert-box {
-        background-color: #fff3cd;
-        border: 1px solid #ffeaa7;
-        border-radius: 5px;
-        padding: 1rem;
-        margin: 1rem 0;
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .quick-action-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .quick-action-card:hover {
+        border-color: #1f77b4;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 </style>
 """, unsafe_allow_html=True)
 
 def main():
-    st.sidebar.title("💰 Sistema Financeiro Kayke")
+    st.sidebar.title("💰 Sistema Financeiro")
     st.sidebar.markdown("---")
     
-    st.markdown('<h1 class="main-header">💰 Dashboard Financeiro</h1>', unsafe_allow_html=True)
+    # Menu de navegação melhorado
+    page = st.sidebar.radio(
+        "Navegação Principal:",
+        [
+            "🚀 Início Rápido",
+            "📊 Dashboard", 
+            "📅 Controle Diário", 
+            "💸 Transações", 
+            "🎯 Método Breno", 
+            "📈 Relatórios",
+            "🎯 Metas",
+            "⚡ Alertas"
+        ]
+    )
     
-    st.info("""
-    🎯 **Bem-vindo ao seu Sistema Financeiro Pessoal!**
+    # Redirecionamento baseado na seleção
+    page_mapping = {
+        "🚀 Início Rápido": "pages/0_🚀_Início_Rápido.py",
+        "📊 Dashboard": "pages/1_📊_Dashboard.py",
+        "📅 Controle Diário": "pages/2_📅_Controle_Diário.py", 
+        "💸 Transações": "pages/3_💸_Transações.py",
+        "🎯 Método Breno": "pages/4_🎯_Método_Breno.py",
+        "📈 Relatórios": "pages/5_📈_Relatórios.py",
+        "🎯 Metas": "pages/6_🎯_Metas.py",
+        "⚡ Alertas": "pages/7_⚡_Alertas.py"
+    }
     
-    Use o menu lateral para navegar entre as páginas:
-    - **📊 Dashboard**: Visão geral das suas finanças
-    - **📅 Controle Diário**: Acompanhamento dia a dia  
-    - **💸 Transações**: Ver e editar todas as transações
-    - **🎯 Método Breno**: Análise do método de economia
-    - **📈 Relatórios**: Relatórios detalhados e tendências
-    """)
-    
-    # Métricas rápidas na página inicial
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("🚀 Status", "Sistema Ativo", "100%")
-    
-    with col2:
-        st.metric("💡 Dica do Dia", "Monitore seus gastos", "📱")
-    
-    with col3:
-        st.metric("🎯 Objetivo", "Economia 25%", "✅")
+    if page in page_mapping:
+        st.switch_page(page_mapping[page])
+    else:
+        # Página inicial padrão
+        st.markdown('<h1 class="main-header">💰 Sistema Financeiro Pessoal</h1>', unsafe_allow_html=True)
+        
+        st.success("""
+        🎉 **Bem-vindo ao seu Sistema Financeiro Inteligente!**
+        
+        Use o menu lateral para navegar ou comece por uma das ações rápidas abaixo:
+        """)
+        
+        # Ações rápidas na página inicial
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            if st.button("📊 Ver Dashboard", use_container_width=True):
+                st.switch_page("pages/1_📊_Dashboard.py")
+        
+        with col2:
+            if st.button("💸 Gerenciar Transações", use_container_width=True):
+                st.switch_page("pages/3_💸_Transações.py")
+        
+        with col3:
+            if st.button("🎯 Acompanhar Metas", use_container_width=True):
+                st.switch_page("pages/6_🎯_Metas.py")
+        
+        with col4:
+            if st.button("⚡ Ver Alertas", use_container_width=True):
+                st.switch_page("pages/7_⚡_Alertas.py")
+        
+        # Status rápido do sistema
+        st.markdown("---")
+        st.subheader("📈 Status do Sistema")
+        
+        try:
+            from services.database import db_manager
+            
+            with db_manager.get_session() as session:
+                from models.transaction import Transaction
+                from models.goal import FinancialGoal
+                
+                total_transactions = session.query(Transaction).filter(Transaction.user_id == 1).count()
+                total_goals = session.query(FinancialGoal).filter(FinancialGoal.user_id == 1).count()
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric("Total de Transações", total_transactions)
+            
+            with col2:
+                st.metric("Metas Ativas", total_goals)
+            
+            with col3:
+                st.metric("Status", "✅ Ativo")
+                
+        except Exception as e:
+            st.error(f"Erro ao carregar status: {e}")
 
 if __name__ == "__main__":
     main()

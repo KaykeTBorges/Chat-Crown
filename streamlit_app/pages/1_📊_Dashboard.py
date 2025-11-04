@@ -21,6 +21,13 @@ class DashboardPage:
     def show_dashboard(self):
         st.markdown('<h1 class="main-header">📊 Dashboard Financeiro</h1>', unsafe_allow_html=True)
 
+        # Filtros
+        col1, col2 = st.columns(2)
+        with col1:
+            mes = st.selectbox("Mês", range(1, 13), datetime.now().month - 1, key="dashboard_month")
+        with col2:
+            ano = st.selectbox("Ano", range(2020, 2031), datetime.now().year - 2020, key="dashboard_year")
+
          # 🔔 NOVO: ALERTAS EM DESTAQUE
         st.subheader("🔔 Alertas do Sistema")
         alerts = alert_service.get_all_alerts(self.user_id, mes, ano)
@@ -35,13 +42,6 @@ class DashboardPage:
                     st.info(f"💡 {alert['message']}")
         else:
             st.success("🎉 Tudo sob controle! Nenhum alerta no momento.")
-        
-        # Filtros
-        col1, col2 = st.columns(2)
-        with col1:
-            mes = st.selectbox("Mês", range(1, 13), datetime.now().month - 1, key="dashboard_month")
-        with col2:
-            ano = st.selectbox("Ano", range(2020, 2031), datetime.now().year - 2020, key="dashboard_year")
         
         # Resumo do mês
         resumo = finance_calculator.get_monthly_summary(self.user_id, mes, ano)

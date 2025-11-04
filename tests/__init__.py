@@ -1,4 +1,0 @@
-"""
-Testes da aplicação.
-"""
-
