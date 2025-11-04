@@ -82,4 +82,66 @@ class FinanceCalculator:
             return (datetime(year + 1, 1, 1) - datetime(year, month, 1)).days
         return (datetime(year, month + 1, 1) - datetime(year, month, 1)).days
 
+    def get_daily_budget_status(self, user_id: int, month: int = None, year: int = None):
+        """Calcula o status do orçamento diário considerando gastos acumulados"""
+        from datetime import datetime, timedelta
+        
+        if month is None:
+            month = datetime.now().month
+        if year is None:
+            year = datetime.now().year
+        
+        resumo = self.get_monthly_summary(user_id, month, year)
+        
+        # Data atual e informações do mês
+        hoje = datetime.now().date()
+        primeiro_dia = datetime(year, month, 1).date()
+        dias_no_mes = resumo['dias_no_mes']
+        dia_do_mes = hoje.day
+        
+        # Buscar gastos variáveis do mês
+        transacoes = self._get_monthly_transactions(user_id, month, year)
+        gastos_variaveis = [t for t in transacoes if t.type == 'despesa_variavel']
+        
+        # Calcular gastos por dia
+        gastos_por_dia = {}
+        for transacao in gastos_variaveis:
+            dia = transacao.date.day
+            if dia not in gastos_por_dia:
+                gastos_por_dia[dia] = 0
+            gastos_por_dia[dia] += transacao.amount
+        
+        # Calcular situação dia a dia
+        saldo_disponivel = resumo['saldo_disponivel']
+        media_diaria = resumo['media_diaria_sugerida']
+        saldo_acumulado = 0
+        situacao_dias = []
+        
+        for dia in range(1, dias_no_mes + 1):
+            gasto_dia = gastos_por_dia.get(dia, 0)
+            saldo_acumulado += media_diaria - gasto_dia
+            
+            situacao_dias.append({
+                'dia': dia,
+                'data': datetime(year, month, dia).strftime('%d/%m'),
+                'gasto': gasto_dia,
+                'meta_diaria': media_diaria,
+                'saldo_acumulado': saldo_acumulado,
+                'status': 'futuro' if dia > dia_do_mes else 'hoje' if dia == dia_do_mes else 'passado',
+                'ultrapassou': gasto_dia > media_diaria
+            })
+        
+        # Status do dia atual
+        dia_atual = next((d for d in situacao_dias if d['dia'] == dia_do_mes), None)
+        
+        return {
+            'resumo_mensal': resumo,
+            'situacao_dias': situacao_dias,
+            'dia_atual': dia_atual,
+            'saldo_restante_mes': saldo_disponivel - sum(gasto['gasto'] for gasto in situacao_dias),
+            'media_ajustada_restante': (saldo_disponivel - sum(gasto['gasto'] for gasto in situacao_dias)) / max(1, dias_no_mes - dia_do_mes),
+            'dias_restantes': dias_no_mes - dia_do_mes,
+            'total_gasto_variavel_mes': sum(gasto['gasto'] for gasto in situacao_dias)
+        }
+
 finance_calculator = FinanceCalculator()
