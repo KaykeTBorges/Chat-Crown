@@ -16,6 +16,8 @@ class Config:
     # App Settings
     ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+    STREAMLIT_URL = os.getenv("STREAMLIT_URL")
     
     # Method Breno Nogueira Defaults
     DEFAULT_SAVINGS_PERCENTAGE = 0.25  # 25%

@@ -5,6 +5,7 @@ from services.database import db_manager
 from datetime import datetime, timedelta
 import uuid
 import logging
+from config import config
 
 logger = logging.getLogger(__name__)
 

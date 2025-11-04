@@ -58,6 +58,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+if "user_id" not in st.session_state:
+    st.session_state.user_id = None
+
 # Função para buscar user_id a partir do token
 def get_user_id_from_token(token: str):
     from models.magic_link import MagicLink

@@ -16,16 +16,6 @@ Bem-vindo ao seu Assistente Financeiro Pessoal!
 💡 *Como usar:*
 • Escreva suas despesas naturalmente: "almoço 45,50" ou "aluguel 1500"
 • Use comandos para ações específicas
-
-📋 *Comandos Disponíveis:*
-/ajuda - Ver todos os comandos
-/resumo - Resumo financeiro mensal
-
-🔮 *Em Breve:*
-/editar - Editar transações
-/orcamento - Definir orçamentos por categoria
-/economia - Acompanhar investimentos
-
 Vamos organizar suas finanças juntos! 💰
     """
     
