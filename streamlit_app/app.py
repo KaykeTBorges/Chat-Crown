@@ -19,6 +19,19 @@ if "user_id" not in st.session_state:
     st.session_state.user_id = None
 
 def get_user_id_from_token(token: str):
+    token = st.query_params.get("token", [None])[0]
+
+    if token:
+        user_id = get_user_id_from_token(token)
+        if user_id:
+            st.session_state.user_id = user_id
+        else:
+            st.error("❌ Link inválido ou expirado")
+            st.stop()
+    else:
+        st.error("❌ Você precisa de um token para acessar esta página")
+        st.stop()
+    
     st.write("🔍 Token recebido na URL:", token)
     
     with db_manager.get_session() as session:
@@ -39,18 +52,6 @@ def get_user_id_from_token(token: str):
     return None
 
 
-token = st.query_params.get("token", [None])[0]
-
-if token:
-    user_id = get_user_id_from_token(token)
-    if user_id:
-        st.session_state.user_id = user_id
-    else:
-        st.error("❌ Link inválido ou expirado")
-        st.stop()
-else:
-    st.error("❌ Você precisa de um token para acessar esta página")
-    st.stop()
 
 user = UsersService.get_user_by_id(st.session_state.user_id)
 
