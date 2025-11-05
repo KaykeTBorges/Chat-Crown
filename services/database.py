@@ -10,23 +10,16 @@ class DatabaseManager:
         self._create_tables()
 
     def _setup_engine(self):
-        """Configura engine com fallback automático para SQLite"""
-        try:
-            self.engine = create_engine(
-                self.database_url,
-                pool_pre_ping=True,
-                future=True
-            )
-            print("✅ Conectado ao Supabase")
-        except Exception as e:
-            print(f"❌ Erro ao conectar ao Supabase: {e}")
-            print("🔄 Alternando para SQLite local...")
-            self.database_url = "sqlite:///./finance.db"
-            self.engine = create_engine(self.database_url, future=True)
+        self.engine = create_engine(
+            self.database_url,
+            pool_pre_ping=True,
+            future=True
+        )
 
         self.SessionLocal = sessionmaker(
             bind=self.engine, autoflush=False, autocommit=False, future=True
         )
+
 
     def get_session(self):
         return self.SessionLocal()
@@ -41,15 +34,9 @@ class DatabaseManager:
             print(f"❌ Erro ao criar tabelas: {e}")
 
     def test_connection(self):
-        """Testa conexão de forma simples"""
-        try:
-            with self.get_session() as session:
-                session.execute(text("SELECT 1"))
-            print("✅ Conexão OK")
-        except Exception:
-            print("⚠️ Conexão falhou, reconfigurando para SQLite...")
-            self.database_url = "sqlite:///./finance.db"
-            self._setup_engine()
-            self._create_tables()
+        with self.get_session() as session:
+            session.execute(text("SELECT 1"))
+        print("✅ Conexão OK")
+
 
 db_manager = DatabaseManager()
