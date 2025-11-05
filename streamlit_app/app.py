@@ -20,9 +20,11 @@ if "user_id" not in st.session_state:
 
 # Função para buscar user_id a partir do token
 def get_user_id_from_token(token: str):
+    st.write("Token recebido na URL:", token)
     with db_manager.get_session() as session:
         magic_link = session.query(MagicLink).filter_by(token=token).first()
         if magic_link and magic_link.expires_at > datetime.utcnow():
+            st.write("Token encontrado no DB:", magic_link.token, magic_link.user_id, magic_link.expires_at)
             return magic_link.user_id
     return None
 
