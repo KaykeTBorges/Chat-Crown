@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+from dotenv import load_dotenv
+load_dotenv()  # ✅ Carrega .env antes de tudo!
+
 """
 Sistema Financeiro Pessoal do Kayke
 Chat Crown + Método Breno Nogueira
@@ -23,7 +26,6 @@ def setup_database():
         db_manager.test_connection()
         logger.info("✅ Conexão com o banco de dados OK!")
         
-        # Cria todas as tabelas automaticamente
         models.Base.metadata.create_all(bind=db_manager.engine)
         logger.info("✅ Todas as tabelas foram verificadas/criadas com sucesso!")
     except Exception as e:
