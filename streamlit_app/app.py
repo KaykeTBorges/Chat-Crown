@@ -27,8 +27,7 @@ def get_user_id_from_token(token: str):
             return magic_link.user_id
         return None
 
-params = st.experimental_get_query_params()
-token = params.get("token", [None])[0]
+token = st.query_params.get("token", [None])[0]
 
 if token:
     user_id = get_user_id_from_token(token)
