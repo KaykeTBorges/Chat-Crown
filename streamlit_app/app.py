@@ -18,40 +18,40 @@ st.set_page_config(
 if "user_id" not in st.session_state:
     st.session_state.user_id = None
 
-def get_user_id_from_token(token: str):
+def get_user_id_from_token():
     token = st.query_params.get("token", [None])[0]
 
-    if token:
-        user_id = get_user_id_from_token(token)
-        if user_id:
-            st.session_state.user_id = user_id
-        else:
-            st.error("❌ Link inválido ou expirado")
-            st.stop()
-    else:
-        st.error("❌ Você precisa de um token para acessar esta página")
-        st.stop()
-    
     st.write("🔍 Token recebido na URL:", token)
+
+    if not token:
+        return None
     
     with db_manager.get_session() as session:
         magic_link = session.query(MagicLink).filter(MagicLink.token == token).first()
-
         st.write("📌 Resultado da consulta:", magic_link)
 
-        if magic_link:
-            st.write("⏳ Expira em:", magic_link.expires_at, " | Agora:", datetime.utcnow())
-            if magic_link.expires_at > datetime.utcnow():
-                st.write("✅ Token válido → user_id:", magic_link.user_id)
-                return magic_link.user_id
-            else:
-                st.write("❌ Token expirado")
+        if magic_link and magic_link.expires_at > datetime.utcnow():
+            st.write("✅ Token válido → user_id:", magic_link.user_id)
+            return magic_link.user_id
         else:
-            st.write("❌ Token não encontrado no banco")
+            st.write("❌ Token inválido ou expirado")
 
     return None
 
 
+
+token = st.query_params.get("token", [None])[0]
+
+if token:
+    user_id = get_user_id_from_token(token)
+    if user_id:
+        st.session_state.user_id = user_id
+    else:
+        st.error("❌ Link inválido ou expirado")
+        st.stop()
+else:
+    st.error("❌ Você precisa de um token para acessar esta página")
+    st.stop()
 
 user = UsersService.get_user_by_id(st.session_state.user_id)
 
