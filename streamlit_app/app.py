@@ -19,14 +19,25 @@ if "user_id" not in st.session_state:
     st.session_state.user_id = None
 
 def get_user_id_from_token(token: str):
+    st.write("🔍 Token recebido na URL:", token)
+    
     with db_manager.get_session() as session:
         magic_link = session.query(MagicLink).filter(MagicLink.token == token).first()
-        st.write("Magic link encontrado:", magic_link)
+
+        st.write("📌 Resultado da consulta:", magic_link)
+
         if magic_link:
-            st.write("Magic link encontrado:", magic_link.token)
-        if magic_link and magic_link.expires_at > datetime.utcnow():
-            return magic_link.user_id
-        return None
+            st.write("⏳ Expira em:", magic_link.expires_at, " | Agora:", datetime.utcnow())
+            if magic_link.expires_at > datetime.utcnow():
+                st.write("✅ Token válido → user_id:", magic_link.user_id)
+                return magic_link.user_id
+            else:
+                st.write("❌ Token expirado")
+        else:
+            st.write("❌ Token não encontrado no banco")
+
+    return None
+
 
 token = st.query_params.get("token", [None])[0]
 
