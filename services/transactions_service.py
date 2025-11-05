@@ -54,6 +54,7 @@ class TransactionsService:
                 )
                 session.add(t)
                 session.commit()
+                session.refresh(t)
                 return t
         except Exception as e:
             print(f"Erro ao criar transação: {e}")

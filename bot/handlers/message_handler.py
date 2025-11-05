@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes
-from services.transactions_service import TransactionsService
+from services.transactions_service import transactions_service
 from services.users_service import UsersService
 from services.ai_processor import ai_processor
 from datetime import datetime
@@ -18,14 +18,14 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Não consegui identificar o valor. Ex: 'almoço 45,50'")
             return
 
-        transaction = TransactionsService.create_transaction(
+        transaction = transactions_service.create(
             user_id=user.id,
+            description=data['description'],
             amount=data['amount'],
             category=data['category'],
-            description=data['description'],
-            transaction_type=data['type'],
-            detected_by=data['detected_by'],
-            original_message=user_message
+            type=data['type'],
+            date=datetime.now(),
+            detected_by=data['detected_by']
         )
 
         await update.message.reply_text(f"✅ Transação registrada: {transaction.category} - R$ {transaction.amount:.2f}")

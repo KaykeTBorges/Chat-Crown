@@ -2,14 +2,18 @@ from telegram import Update
 from telegram.ext import ContextTypes
 import logging
 from services.finance_calculator import finance_calculator
+from services.users_service import UsersService  # ✅ importar UsersService
 
 logger = logging.getLogger(__name__)
 
 async def summary_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para o comando /resumo"""
-    user = update.effective_user
     
     try:
+        # ✅ Obter o usuário do banco de dados
+        user = UsersService.get_or_create_user(update.effective_user)
+
+        # ✅ Agora user.id é o id do banco
         resumo = finance_calculator.get_monthly_summary(user.id)
         
         if resumo['transacoes_count'] == 0:
@@ -50,7 +54,6 @@ async def summary_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • Dias no mês: {resumo['dias_no_mes']}
 """
         
-        # Adicionar alertas se houver
         if resumo['alertas']:
             response += "\n\n⚠️ *ALERTAS:*\n• " + "\n• ".join(resumo['alertas'])
         
