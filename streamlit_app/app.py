@@ -20,18 +20,15 @@ if "user_id" not in st.session_state:
 
 def get_user_id_from_token(token: str):
     with db_manager.get_session() as session:
-        magic_link = session.query(MagicLink).filter_by(token=token).first()
-        st.write("Magic link encontrado:", magic_link)
+        magic_link = session.query(MagicLink).filter(MagicLink.token == token).first()
+        if magic_link:
+            st.write("Magic link encontrado:", magic_link.token)
         if magic_link and magic_link.expires_at > datetime.utcnow():
-            st.write("Token encontrado no DB:", magic_link.token, magic_link.user_id, magic_link.expires_at)
             return magic_link.user_id
-    return None
+        return None
 
-# Pegando token da URL
-params = st.query_params  # ou st.experimental_get_query_params()
-token = params.get("token")
-if isinstance(token, list):
-    token = token[0]  # pega o primeiro elemento da lista, que deve ser a string completa
+params = st.experimental_get_query_params()
+token = params.get("token", [None])[0]
 
 if token:
     user_id = get_user_id_from_token(token)
