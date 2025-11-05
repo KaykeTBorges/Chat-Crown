@@ -2,6 +2,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from services.database import db_manager
+from services.users_service import UsersService
 from datetime import datetime, timedelta
 import uuid
 import logging
@@ -10,7 +11,7 @@ from config import config
 logger = logging.getLogger(__name__)
 
 async def create_magic_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
+    user_db = UsersService.get_or_create_user(update.effective_user)
     token = str(uuid.uuid4())
     now = datetime.utcnow()
 
@@ -24,12 +25,12 @@ async def create_magic_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 session.commit()
 
             # 2️⃣ Apaga tokens antigos do usuário atual (mesmo que não estejam expirados)
-            session.query(MagicLink).filter(MagicLink.user_id == user.id).delete()
+            session.query(MagicLink).filter(MagicLink.user_id == user_db.id).delete()
             session.commit()
 
             # 3️⃣ Cria o novo token
             magic_link = MagicLink(
-                user_id=user.id,
+                user_id=user_db.id,
                 token=token,
                 expires_at=now + timedelta(minutes=15)  # Expira em 15 minutos
             )
@@ -42,7 +43,7 @@ async def create_magic_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"🔗 Aqui está seu link seguro para acessar suas transações:\n{link}"
         )
-        logger.info(f"Magic link criado para user_id={user.id}")
+        logger.info(f"Magic link criado para user_id={user_db.id}")
 
     except Exception as e:
         logger.error(f"Erro ao criar magic link: {e}")
