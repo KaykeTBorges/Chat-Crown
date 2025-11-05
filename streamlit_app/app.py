@@ -18,32 +18,29 @@ st.set_page_config(
 if "user_id" not in st.session_state:
     st.session_state.user_id = None
 
-# Função para buscar user_id a partir do token
 def get_user_id_from_token(token: str):
-    st.write("Token recebido na URL:", token)
     with db_manager.get_session() as session:
         magic_link = session.query(MagicLink).filter_by(token=token).first()
         if magic_link and magic_link.expires_at > datetime.utcnow():
-            st.write("Token encontrado no DB:", magic_link.token, magic_link.user_id, magic_link.expires_at)
             return magic_link.user_id
     return None
 
-# --------------- Autenticação do usuário ----------------
-if st.session_state.user_id is None:
-    # 1️⃣ Pega token da URL
-    token_list = st.query_params.get("token", [None])
-    token = token_list[0] if token_list else None
+# Pegando token da URL
+params = st.query_params  # ou st.experimental_get_query_params()
+token = params.get("token")
+if isinstance(token, list):
+    token = token[0]  # pega o primeiro elemento da lista, que deve ser a string completa
 
-    if token:
-        user_id = get_user_id_from_token(token)
-        if user_id:
-            st.session_state.user_id = user_id
-        else:
-            st.error("❌ Link inválido ou expirado")
-            st.stop()
+if token:
+    user_id = get_user_id_from_token(token)
+    if user_id:
+        st.session_state.user_id = user_id
     else:
-        st.error("❌ Você precisa de um token para acessar esta página")
+        st.error("❌ Link inválido ou expirado")
         st.stop()
+else:
+    st.error("❌ Você precisa de um token para acessar esta página")
+    st.stop()
 
 user = UsersService.get_user_by_id(st.session_state.user_id)
 
