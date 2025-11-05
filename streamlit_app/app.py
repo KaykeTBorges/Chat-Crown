@@ -14,29 +14,96 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inicializa user_id na sessão
 if "user_id" not in st.session_state:
     st.session_state.user_id = None
 
-def get_user_id_from_token():
-    token = st.query_params.get("token", [None])[0]
-
-    st.write("🔍 Token recebido na URL:", token)
-
+def lookup_token(token: str):
+    """Retorna user_id se token válido, senão None. Também retorna debug info."""
     if not token:
-        return None
-    
+        return None, "token vazio"
+
     with db_manager.get_session() as session:
-        magic_link = session.query(MagicLink).filter(MagicLink.token == token).first()
-        st.write("📌 Resultado da consulta:", magic_link)
-
-        if magic_link and magic_link.expires_at > datetime.utcnow():
-            st.write("✅ Token válido → user_id:", magic_link.user_id)
-            return magic_link.user_id
+        # Debug: listar matching tokens exatos (mostra None se não achar)
+        ml = session.query(MagicLink).filter(MagicLink.token == token).first()
+        # opcional: listar todos os tokens recentes (apenas debug)
+        recent = session.query(MagicLink).order_by(MagicLink.created_at.desc()).limit(10).all()
+        debug = {
+            "found": bool(ml),
+            "found_token": ml.token if ml else None,
+            "found_user_id": ml.user_id if ml else None,
+            "found_expires_at": ml.expires_at if ml else None,
+            "recent_tokens": [(r.token, r.user_id, r.expires_at) for r in recent]
+        }
+        if ml:
+            # verificação de expiração - comparando UTC
+            now = datetime.utcnow()
+            if ml.expires_at and ml.expires_at > now:
+                return ml.user_id, debug
+            else:
+                return None, debug
         else:
-            st.write("❌ Token inválido ou expirado")
+            return None, debug
 
-    return None
+# ------------------ PEGAR TOKEN DA URL CORRETAMENTE ------------------
+# st.query_params sempre retorna listas como valores; pegue [0]
+token_param = None
+try:
+    token_param = st.query_params.get("token", [None])[0]
+except Exception:
+    # fallback robusto
+    params = dict(st.query_params)
+    token_param = params.get("token")
+    if isinstance(token_param, list):
+        token_param = token_param[0]
+
+st.write("🔍 Token recebido na URL (raw):", token_param)
+
+# Tenta validar token vindo da URL
+if token_param:
+    user_id, debug_info = lookup_token(token_param)
+    st.write("🔎 Debug lookup:", debug_info)
+    if user_id:
+        st.session_state.user_id = user_id
+        st.success(f"✅ Token válido — user_id setado ({user_id})")
+    else:
+        st.warning("⚠️ Token da URL inválido/expirado ou não encontrado.")
+        # mostra opção manual
+        pasted = st.text_input("Cole aqui o token (fallback manual):", value="")
+        if st.button("Validar token colado"):
+            manual_user_id, manual_debug = lookup_token(pasted.strip())
+            st.write("🔎 Debug manual:", manual_debug)
+            if manual_user_id:
+                st.session_state.user_id = manual_user_id
+                st.success(f"✅ Token válido — user_id setado ({manual_user_id})")
+                # opcional: redirect para limpar query params usando st.experimental_set_query_params
+                st.experimental_set_query_params()
+                st.experimental_rerun()
+            else:
+                st.error("❌ Token colado inválido ou expirado.")
+else:
+    st.info("Navegando sem token na URL. Cole o token abaixo (recebido via bot).")
+    pasted = st.text_input("Cole aqui o token:", value="")
+    if st.button("Validar token colado"):
+        manual_user_id, manual_debug = lookup_token(pasted.strip())
+        st.write("🔎 Debug manual:", manual_debug)
+        if manual_user_id:
+            st.session_state.user_id = manual_user_id
+            st.success(f"✅ Token válido — user_id setado ({manual_user_id})")
+            st.experimental_set_query_params()
+            st.experimental_rerun()
+        else:
+            st.error("❌ Token inválido ou expirado.")
+
+# DEBUG ADVANCED (apenas se você quiser listar tokens no DB — remova em prod)
+if st.checkbox("🛠️ Mostrar tokens recentes (DEBUG)", value=False):
+    with db_manager.get_session() as session:
+        recent = session.query(MagicLink).order_by(MagicLink.created_at.desc()).limit(50).all()
+        st.write("Tokens recentes (token, user_id, expires_at):")
+        st.write([(r.token, r.user_id, r.expires_at) for r in recent])
+
+# Final: se user_id foi setado, segue o app; se não, paramos.
+if st.session_state.user_id is None:
+    st.stop()
 
 user = UsersService.get_user_by_id(st.session_state.user_id)
 
