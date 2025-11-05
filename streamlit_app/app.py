@@ -38,21 +38,6 @@ def get_user_id_from_token():
 
     return None
 
-
-
-token = st.query_params.get("token", [None])[0]
-
-if token:
-    user_id = get_user_id_from_token(token)
-    if user_id:
-        st.session_state.user_id = user_id
-    else:
-        st.error("❌ Link inválido ou expirado")
-        st.stop()
-else:
-    st.error("❌ Você precisa de um token para acessar esta página")
-    st.stop()
-
 user = UsersService.get_user_by_id(st.session_state.user_id)
 
 # -------------------- Cabeçalho --------------------
