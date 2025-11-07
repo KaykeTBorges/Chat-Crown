@@ -6,6 +6,7 @@ load_dotenv()
 class Config:
     # Telegram Bot
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME")
     
     # Database (we'll set this up later with Supabase)
     DATABASE_URL = os.getenv("DATABASE_URL")
