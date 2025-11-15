@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+# models/budget.py
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from datetime import datetime
 from .base import Base
 
@@ -6,7 +7,9 @@ class Budget(Base):
     __tablename__ = "budgets"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, nullable=False)
+    
+    telegram_id = Column(Integer, ForeignKey("users.telegram_id"), nullable=False, index=True)
+    
     category = Column(String(100), nullable=False)
     monthly_limit = Column(Float, nullable=False)
     month = Column(Integer, nullable=False)

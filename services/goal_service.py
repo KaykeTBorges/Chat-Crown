@@ -6,7 +6,7 @@ class GoalService:
     def __init__(self):
         self.db = db_manager
     
-    def create_goal(self, user_id: int, name: str, target_amount: float, 
+    def create_goal(self, telegram_id: int, name: str, target_amount: float, 
                    deadline: str, category: str = "Outros", priority: int = 1):
         """Cria uma nova meta financeira"""
         try:
@@ -14,7 +14,7 @@ class GoalService:
                 from models.goal import FinancialGoal
                 
                 goal = FinancialGoal(
-                    user_id=user_id,
+                    user_id=telegram_id,
                     name=name,
                     target_amount=target_amount,
                     current_amount=0.0,
@@ -67,13 +67,13 @@ class GoalService:
             print(f"❌ Erro ao excluir meta: {e}")
             return False
     
-    def get_user_goals(self, user_id: int, include_completed: bool = True):
+    def get_user_goals(self, telegram_id: int, include_completed: bool = True):
         """Busca metas do usuário"""
         try:
             with self.db.get_session() as session:
                 from models.goal import FinancialGoal
                 
-                query = session.query(FinancialGoal).filter(FinancialGoal.user_id == user_id)
+                query = session.query(FinancialGoal).filter(FinancialGoal.user_id == telegram_id)
                 
                 if not include_completed:
                     # Filtra metas não concluídas (progresso < 100%)

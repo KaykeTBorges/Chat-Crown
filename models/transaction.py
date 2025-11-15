@@ -8,9 +8,7 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-
-    # Relacionamento com usuário
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    telegram_id = Column(Integer, ForeignKey("users.telegram_id"), nullable=False, index=True)
     user = relationship("User", back_populates="transactions")
 
     # Tipos: renda, despesa_fixa, despesa_variavel, economia
@@ -31,11 +29,11 @@ class Transaction(Base):
 
     def __repr__(self):
         return (
-            f"<Transaction(user_id={self.user_id}, type={self.type}, "
+            f"<Transaction(telegram_id={self.telegram_id}, type={self.type}, "
             f"amount={self.amount}, category={self.category})>"
         )
 
-    # Propriedades auxiliares
+    # Propriedades auxiliares (sem mudanças)
     @property
     def is_income(self):
         return self.type == "renda"

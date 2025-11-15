@@ -1,7 +1,7 @@
 import re
 import json
 from groq import Groq
-from config import config
+from config.config import config
 from datetime import datetime
 
 class AIProcessor:

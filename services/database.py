@@ -1,7 +1,7 @@
 # services/database.py
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from config import config
+from config.config import config
 
 class DatabaseManager:
     def __init__(self):

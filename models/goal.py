@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Date
+# models/financial_goal.py
+from sqlalchemy import Column, Integer, String, Float, DateTime, Date, ForeignKey
 from datetime import datetime
 from .base import Base
 
@@ -6,7 +7,9 @@ class FinancialGoal(Base):
     __tablename__ = "financial_goals"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, nullable=False)
+    
+    telegram_id = Column(Integer, ForeignKey("users.telegram_id"), nullable=False, index=True)
+    
     name = Column(String(200), nullable=False)
     target_amount = Column(Float, nullable=False)
     current_amount = Column(Float, default=0.0)

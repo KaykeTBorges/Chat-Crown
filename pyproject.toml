@@ -21,6 +21,9 @@ dependencies = [
     "python-dateutil>=2.8.2",
     "pydantic-settings>=2.1.0",
     "rapidfuzz>=3.14.3",
+    "jinja2[fastapi]>=3.1.6",
+    "requests>=2.32.5",
+    "python-multipart>=0.0.20",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +39,3 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/kayke_finance_app"]
-
-# REMOVA completamente a seção [tool.uv.dependency-groups]
-# O UV usa [project.optional-dependencies] automaticamente

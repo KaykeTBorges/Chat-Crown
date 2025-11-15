@@ -10,12 +10,12 @@ class TransactionsService:
         self.categories = ai_processor.categories  # categorias padrão
 
     # ---------------- CRUD ----------------
-    def get_transactions(self, user_id, filters=None, page=0, items_per_page=25):
+    def get_transactions(self, telegram_id, filters=None, page=0, items_per_page=25):
         """
         Retorna transações filtradas, ordenadas e paginadas.
         """
         filters = filters or {}
-        transactions = self._get_all_transactions(user_id)
+        transactions = self._get_all_transactions(telegram_id)
 
         # filtros
         transactions = self._apply_search(transactions, filters.get("search_term"))
@@ -32,19 +32,19 @@ class TransactionsService:
         end = start + items_per_page
         return transactions[start:end], total_pages
 
-    def _get_all_transactions(self, user_id):
+    def _get_all_transactions(self, telegram_id):
         try:
             with db_manager.get_session() as session:
-                return session.query(Transaction).filter(Transaction.user_id == user_id).all()
+                return session.query(Transaction).filter(Transaction.telegram_id == telegram_id).all()
         except Exception as e:
             print(f"Erro ao buscar transações: {e}")
             return []
 
-    def create(self, user_id, description, amount, category, type, date, detected_by="manual"):
+    def create(self, telegram_id, description, amount, category, type, date, detected_by="manual"):
         try:
             with db_manager.get_session() as session:
                 t = Transaction(
-                    user_id=user_id,
+                    telegram_id=telegram_id,
                     description=description,
                     amount=amount,
                     category=category,
@@ -87,6 +87,18 @@ class TransactionsService:
         except Exception as e:
             print(f"Erro ao excluir transação: {e}")
             return False
+
+    def get_by_id(self, transaction_id: int):
+        """
+        Busca uma única transação pelo seu ID.
+        Essencial para a funcionalidade de edição.
+        """
+        try:
+            with db_manager.get_session() as session:
+                return session.query(Transaction).filter(Transaction.id == transaction_id).first()
+        except Exception as e:
+            print(f"Erro ao buscar transação por ID: {e}")
+            return None
 
     # ---------------- Filtros ----------------
     def _apply_search(self, transactions, search_term):
@@ -140,56 +152,11 @@ class TransactionsService:
         reverse = sort_by in ['date_desc', 'amount_desc']
         return sorted(transactions, key=key_funcs.get(sort_by, lambda t: t.date), reverse=reverse)
 
-    # ---------------- Import / Export ----------------
-    def import_from_dataframe(self, user_id, df):
-        try:
-            required = {"data", "descricao", "valor", "categoria", "tipo"}
-            if not required.issubset(set(df.columns)):
-                raise ValueError("Colunas obrigatórias ausentes")
-            
-            df.columns = [c.lower().strip() for c in df.columns]
-            
-            with db_manager.get_session() as session:
-                for _, row in df.iterrows():
-                    t = Transaction(
-                        user_id=user_id,
-                        description=row["descricao"],
-                        amount=float(row["valor"]),
-                        category=row["categoria"],
-                        type=row["tipo"],
-                        date=pd.to_datetime(row["data"]).date(),
-                        detected_by="upload"
-                    )
-                    session.add(t)
-                session.commit()
-            return True
-        except Exception as e:
-            print(f"Erro ao importar transações: {e}")
-            return False
-
-    def export(self, transactions, format="csv"):
-        if not transactions:
-            return None
-        df = pd.DataFrame([{
-            'Data': t.date.strftime("%d/%m/%Y") if isinstance(t.date, datetime) else t.date,
-            'Tipo': t.type,
-            'Categoria': t.category,
-            'Descrição': t.description,
-            'Valor': t.amount,
-            'Detectado por': t.detected_by
-        } for t in transactions])
-        if format == "csv":
-            return df.to_csv(index=False, sep=";", encoding="utf-8")
-        elif format == "json":
-            return df.to_json(orient="records", force_ascii=False)
-        else:
-            return None
-
-    def get_recent_transactions(self, user_id: int, limit: int = 5):
+    def get_recent_transactions(self, telegram_id: int, limit: int = 5):
         with db_manager.get_session() as session:
             return (
                 session.query(Transaction)
-                .filter(Transaction.user_id == user_id)
+                .filter(Transaction.telegram_id == telegram_id)
                 .order_by(Transaction.date.desc())
                 .limit(limit)
                 .all()

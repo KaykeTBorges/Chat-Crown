@@ -1,8 +1,9 @@
+# bot/handlers/summary_handler.py
 from telegram import Update
 from telegram.ext import ContextTypes
 import logging
 from services.finance_calculator import finance_calculator
-from services.users_service import UsersService  # ✅ importar UsersService
+from services.users_service import UsersService # ✅ importar UsersService
 
 logger = logging.getLogger(__name__)
 
@@ -10,11 +11,11 @@ async def summary_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para o comando /resumo"""
     
     try:
-        # ✅ Obter o usuário do banco de dados
+        # ✅ Obter o usuário do banco de dados. O objeto retornado tem o 'id' interno.
         user = UsersService.get_or_create_user(update.effective_user)
 
-        # ✅ Agora user.id é o id do banco
-        resumo = finance_calculator.get_monthly_summary(user.id)
+        # ✅ Usar o ID interno do banco, não o ID do Telegram
+        resumo = finance_calculator.get_monthly_summary(user.id) 
         
         if resumo['transacoes_count'] == 0:
             await update.message.reply_text(
@@ -29,7 +30,7 @@ async def summary_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
         
-        # Formatar resumo
+        # (O resto do seu código de formatação do resumo continua igual)
         status_economia = "✅" if resumo['economia_real_vs_meta'] >= 0 else "❌"
         sinal_economia = "+" if resumo['economia_real_vs_meta'] >= 0 else ""
         

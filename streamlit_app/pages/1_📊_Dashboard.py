@@ -1,123 +1,60 @@
-# pages/1_📊_Dashboard.py
 import streamlit as st
 import plotly.graph_objects as go
-from datetime import datetime
-from services.transactions_service import transactions_service
 from services.finance_calculator import finance_calculator
-from services.alert_service import alert_service
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-
+from services.alert_service import alert_service 
+from utils import check_authentication, month_year_filter
 
 st.set_page_config(page_title="Dashboard", page_icon="📊", layout="wide")
 
-class DashboardPage:
-    def __init__(self):
-        self.user_id = st.session_state.user_id
+telegram_id = check_authentication()
+month, year = month_year_filter("dashboard")
 
-    def show_dashboard(self):
-        st.markdown('<h1 class="main-header">📊 Dashboard Financeiro</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">📊 Dashboard Financeiro</h1>', unsafe_allow_html=True)
 
-        # ---------------------- Filtros ----------------------
-        col1, col2 = st.columns(2)
-        with col1:
-            mes = st.selectbox(
-                "Mês", list(range(1, 13)), index=datetime.now().month - 1, key="dashboard_month"
-            )
-        with col2:
-            ano = st.selectbox(
-                "Ano", list(range(2020, 2031)), index=datetime.now().year - 2020, key="dashboard_year"
-            )
+# --- SEÇÃO DE ALERTAS DO SISTEMA ---
+st.subheader("🔔 Alertas do Sistema")
+try:
+    # Esta parte depende de você ter o `alert_service.get_all_alerts()`
+    # Se não tiver, pode remover este bloco try/except
+    alerts = alert_service.get_all_alerts(telegram_id, month, year)
+    if alerts:
+        for alert in alerts:
+            if alert.get('severity') == 'high':
+                st.error(f"🚨 {alert.get('message', '')}")
+            elif alert.get('severity') == 'medium':
+                st.warning(f"⚠️ {alert.get('message', '')}")
+            else:
+                st.info(f"💡 {alert.get('message', '')}")
+    else:
+        st.success("🎉 Tudo sob controle! Nenhum alerta no momento.")
+except NameError:
+    st.info("Serviço de alertas não configurado.")
+except Exception as e:
+    st.error(f"Não foi possível carregar os alertas: {e}")
 
-        # ---------------------- Alertas ----------------------
-        st.subheader("🔔 Alertas do Sistema")
-        alerts = alert_service.get_all_alerts(self.user_id, mes, ano)
-        if alerts:
-            for alert in alerts:
-                if alert['severity'] == 'high':
-                    st.error(f"🚨 {alert['message']}")
-                elif alert['severity'] == 'medium':
-                    st.warning(f"⚠️ {alert['message']}")
-                else:
-                    st.info(f"💡 {alert['message']}")
-        else:
-            st.success("🎉 Tudo sob controle! Nenhum alerta no momento.")
+st.markdown("---")
 
-        # ---------------------- Resumo do mês ----------------------
-        resumo = finance_calculator.get_monthly_summary(self.user_id, mes, ano)
+# --- LÓGICA PRINCIPAL DO DASHBOARD ---
+resumo = finance_calculator.get_monthly_summary(telegram_id, month, year)
 
-        if resumo['transacoes_count'] == 0:
-            st.warning("📝 Nenhuma transação registrada para este período.")
-            st.info("💡 Use o Telegram bot para registrar suas primeiras transações!")
-            return
+if resumo['transacoes_count'] == 0:
+    st.warning("📝 Nenhuma transação registrada para este período.")
+    st.info("💡 Use o bot do Telegram para registrar suas primeiras transações!")
+    st.stop()
 
-        # ---------------------- Métricas principais ----------------------
-        st.subheader("📈 Métricas do Mês")
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric("💰 Renda Total", f"R$ {resumo['total_renda']:,.2f}")
-        
-        with col2:
-            st.metric(
-                "💸 Despesas Totais", 
-                f"R$ {resumo['total_despesas']:,.2f}",
-                delta=f"-{(resumo['total_despesas']/resumo['total_renda']*100):.1f}%" 
-                if resumo['total_renda'] > 0 else None,
-                delta_color="inverse"
-            )
-        
-        with col3:
-            st.metric(
-                "🚀 Economia Real", 
-                f"R$ {resumo['total_economia']:,.2f}",
-                delta=f"{resumo['economia_real_vs_meta']:.2f} vs Meta"
-            )
-        
-        with col4:
-            cor_saldo = "normal" if resumo['saldo_final'] >= 0 else "off"
-            st.metric("⚖️ Saldo Final", f"R$ {resumo['saldo_final']:,.2f}", delta_color=cor_saldo)
+st.subheader("📈 Métricas do Mês")
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("💰 Renda Total", f"R$ {resumo['total_renda']:,.2f}")
+col2.metric("💸 Despesas Totais", f"R$ {resumo['total_despesas']:,.2f}")
+col3.metric("🚀 Economia Real", f"R$ {resumo['total_economia']:,.2f}")
+col4.metric("⚖️ Saldo Final", f"R$ {resumo['saldo_final']:,.2f}")
 
-        # ---------------------- Gráfico de distribuição ----------------------
-        st.subheader("📊 Distribuição Financeira")
-        self._show_distribution_chart(resumo)
-
-        # ---------------------- Alertas do resumo ----------------------
-        if resumo.get('alertas'):
-            st.subheader("⚠️ Alertas do Resumo")
-            for alerta in resumo['alertas']:
-                st.markdown(f'<div class="alert-box">{alerta}</div>', unsafe_allow_html=True)
-
-    def _show_distribution_chart(self, resumo):
-        categorias = ['Renda', 'Despesas Fixas', 'Despesas Variáveis', 'Economia']
-        valores = [
-            resumo['total_renda'],
-            resumo['total_despesas_fixas'],
-            resumo['total_despesas_variaveis'],
-            resumo['total_economia']
-        ]
-        cores = ['#00cc96', '#ef553b', '#ffa15a', '#636efa']
-
-        fig = go.Figure(
-            go.Bar(
-                x=categorias,
-                y=valores,
-                marker_color=cores,
-                text=[f'R$ {v:,.2f}' for v in valores],
-                textposition='auto'
-            )
-        )
-
-        fig.update_layout(
-            title="Distribuição Financeira Mensal",
-            xaxis_title="Categorias",
-            yaxis_title="Valor (R$)",
-            showlegend=False
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-# ---------------------- Instância e execução ----------------------
-dashboard_page = DashboardPage()
-dashboard_page.show_dashboard()
+st.subheader("📊 Distribuição Financeira")
+fig = go.Figure(data=[
+    go.Bar(name='Renda', x=['Renda'], y=[resumo['total_renda']], marker_color='#00cc96'),
+    go.Bar(name='Despesas Fixas', x=['Despesas'], y=[resumo['total_despesas_fixas']], marker_color='#ef553b'),
+    go.Bar(name='Despesas Variáveis', x=['Despesas'], y=[resumo['total_despesas_variaveis']], marker_color='#ffa15a'),
+    go.Bar(name='Economia', x=['Economia'], y=[resumo['total_economia']], marker_color='#636efa')
+])
+fig.update_layout(barmode='stack', title_text='Distribuição Financeira Mensal')
+st.plotly_chart(fig, width='stretch')

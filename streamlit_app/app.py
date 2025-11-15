@@ -1,95 +1,74 @@
 # streamlit_app/app.py
 import streamlit as st
-from config import config
-from services.auth_service import AuthService
-from services.users_service import UsersService
+import requests
+from services.users_service import users_service
+from config.config import config
 
-st.set_page_config(
-    page_title="Sistema Financeiro - Chat Crown",
-    page_icon="💰",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Sistema Financeiro", page_icon="💰", layout="wide")
 
-# -------------------- LOGIN TELEGRAM OAUTH --------------------
-def require_login():
-    """Valida login pelo Telegram OAuth e mantém na sessão."""
-    if "user_id" in st.session_state:
-        return  # já logado
+# --- LÓGICA DE AUTENTICAÇÃO ---
 
-    # Coleta valores da URL vindos do Telegram
-    raw_params = st.query_params
-    data = {k: v[0] for k, v in raw_params.items()} if raw_params else {}
+# Se o usuário já está logado, mostra o app
+if 'telegram_id' in st.session_state and st.session_state['telegram_id']:
+    # Carrega os dados do usuário se ainda não foram carregados
+    if 'user' not in st.session_state:
+        st.session_state['user'] = users_service.get_user_by_telegram_id(st.session_state['telegram_id'])
 
-    # Se o Telegram enviou id + hash → tentamos validar
-    if "id" in data and "hash" in data:
-        if AuthService.verify_telegram_auth(data.copy()):
-            st.session_state.user_id = int(data["id"])
-            st.experimental_set_query_params()  # remove info sensível da URL
-            st.experimental_rerun()
-        else:
-            st.error("❌ Não foi possível autenticar. Tente novamente pelo /painel no bot.")
-            st.stop()
+    # --- BLOCO DA INTERFACE DO USUÁRIO LOGADO ---
+    from utils import display_user_info
+    display_user_info()
 
-    # Nenhum login → Mostra botão de login
-    login_url = (
-        "https://oauth.telegram.org/auth?"
-        f"bot_id={config.TELEGRAM_BOT_USERNAME}&"
-        f"origin={config.STREAMLIT_URL}&"
-        f"return_to={config.STREAMLIT_URL}"
+    st.sidebar.markdown("---")
+    page = st.sidebar.radio(
+        "Navegação Principal:",
+        [
+            "🚀 Início Rápido",
+            "📊 Dashboard",
+            "📅 Controle Diário",
+            "💸 Transações",
+            "🎯 Metas e Orçamentos",
+            "📈 Relatórios"
+        ]
     )
+    page_mapping = {
+        "🚀 Início Rápido": "pages/0_🚀_Início_Rápido.py",
+        "📊 Dashboard": "pages/1_📊_Dashboard.py",
+        "📅 Controle Diário": "pages/4_📅_Controle_Diário.py",
+        "💸 Transações": "pages/2_💸_Transações.py",
+        "🎯 Metas e Orçamentos": "pages/3_🎯_Metas_e_Orçamentos.py",
+        "📈 Relatórios": "pages/5_📈_Relatórios.py"
+    }
+    if page in page_mapping:
+        st.switch_page(page_mapping[page])
 
-    st.markdown("## 🔐 Login Necessário")
-    st.markdown(f"""
-    <a href="{login_url}" style="
-        font-size:20px;
-        padding:12px 18px;
-        background:#4b9be5;
-        color:white;
-        border-radius:8px;
-        text-decoration:none;">
-        👉 Entrar com Telegram
-    </a>
-    """, unsafe_allow_html=True)
-    st.stop()
+# Se não está logado, mostra a página de login
+else:
+    st.markdown('<h1 class="main-header">👑 Chat Crown - Login</h1>', unsafe_allow_html=True)
+    
+    st.info("Para acessar seu painel, digite `/login` no bot do Telegram para receber seu código de acesso.")
+    
+    with st.form("login_form"):
+        code = st.text_input("Digite seu código de 6 dígitos:", max_chars=6, placeholder="123456")
+        submitted = st.form_submit_button("Acessar")
 
-
-# -------------------- EXECUTA LOGIN --------------------
-require_login()
-user = UsersService.get_user_by_id(st.session_state.user_id)
-
-
-# -------------------- Cabeçalho --------------------
-st.markdown('<h1 class="main-header">💰 Sistema Financeiro Pessoal</h1>', unsafe_allow_html=True)
-
-# -------------------- Menu Lateral --------------------
-st.sidebar.title(f"👤 {user.first_name or 'Usuário'}")
-st.sidebar.markdown("---")
-
-page = st.sidebar.radio(
-    "Navegação Principal:",
-    [
-        "🚀 Início Rápido",
-        "📊 Dashboard", 
-        "📅 Controle Diário", 
-        "💸 Transações", 
-        "🎯 Método Breno", 
-        "📈 Relatórios",
-        "🎯 Metas",
-        "⚡ Alertas"
-    ]
-)
-
-page_mapping = {
-    "🚀 Início Rápido": "pages/0_🚀_Início_Rápido.py",
-    "📊 Dashboard": "pages/1_📊_Dashboard.py",
-    "📅 Controle Diário": "pages/2_📅_Controle_Diário.py",
-    "💸 Transações": "pages/3_💸_Transações.py",
-    "🎯 Método Breno": "pages/4_🎯_Método_Breno.py",
-    "📈 Relatórios": "pages/5_📈_Relatórios.py",
-    "🎯 Metas": "pages/6_🎯_Metas.py",
-    "⚡ Alertas": "pages/7_⚡_Alertas.py"
-}
-
-if page in page_mapping:
-    st.switch_page(page_mapping[page])
+        if submitted:
+            if not code or len(code) != 6 or not code.isdigit():
+                st.error("Por favor, digite um código válido de 6 dígitos.")
+            else:
+                with st.spinner("Validando código..."):
+                    try:
+                        response = requests.post(f"{config.API_URL}/auth/validate_code", data={"code": code})
+                        if response.status_code == 200:
+                            data = response.json()
+                            telegram_id = data.get("telegram_id")
+                            
+                            # Cria a sessão do usuário
+                            st.session_state['telegram_id'] = telegram_id
+                            st.session_state['user'] = users_service.get_user_by_telegram_id(telegram_id)
+                            
+                            st.success("✅ Login realizado com sucesso!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Código inválido ou expirado. Verifique o código ou gere um novo no bot.")
+                    except requests.exceptions.RequestException as e:
+                        st.error(f"Não foi possível conectar ao serviço de autenticação. Erro: {e}")

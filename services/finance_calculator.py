@@ -5,13 +5,13 @@ class FinanceCalculator:
     def __init__(self):
         self.db = db_manager
     
-    def get_monthly_summary(self, user_id: int, month: int = None, year: int = None):
+    def get_monthly_summary(self, telegram_id: int, month: int = None, year: int = None):
         if month is None:
             month = datetime.now().month
         if year is None:
             year = datetime.now().year
         
-        transactions = self._get_monthly_transactions(user_id, month, year)
+        transactions = self._get_monthly_transactions(telegram_id, month, year)
         
         total_renda = sum(t.amount for t in transactions if t.type == 'renda')
         total_despesas_fixas = sum(t.amount for t in transactions if t.type == 'despesa_fixa')
@@ -63,12 +63,12 @@ class FinanceCalculator:
             'transacoes_count': len(transactions)
         }
     
-    def _get_monthly_transactions(self, user_id: int, month: int, year: int):
+    def _get_monthly_transactions(self, telegram_id: int, month: int, year: int):
         try:
             with self.db.get_session() as session:
                 from models.transaction import Transaction
                 transactions = session.query(Transaction).filter(
-                    Transaction.user_id == user_id,
+                    Transaction.user_id == telegram_id,
                     Transaction.date >= f"{year}-{month:02d}-01",
                     Transaction.date <= f"{year}-{month:02d}-{self._dias_no_mes(month, year)}"
                 ).all()
@@ -82,7 +82,7 @@ class FinanceCalculator:
             return (datetime(year + 1, 1, 1) - datetime(year, month, 1)).days
         return (datetime(year, month + 1, 1) - datetime(year, month, 1)).days
 
-    def get_daily_budget_status(self, user_id: int, month: int = None, year: int = None):
+    def get_daily_budget_status(self, telegram_id: int, month: int = None, year: int = None):
         """Calcula o status do orçamento diário considerando gastos acumulados"""
         from datetime import datetime, timedelta
         
@@ -91,7 +91,7 @@ class FinanceCalculator:
         if year is None:
             year = datetime.now().year
         
-        resumo = self.get_monthly_summary(user_id, month, year)
+        resumo = self.get_monthly_summary(telegram_id, month, year)
         
         # Data atual e informações do mês
         hoje = datetime.now().date()
@@ -100,7 +100,7 @@ class FinanceCalculator:
         dia_do_mes = hoje.day
         
         # Buscar gastos variáveis do mês
-        transacoes = self._get_monthly_transactions(user_id, month, year)
+        transacoes = self._get_monthly_transactions(telegram_id, month, year)
         gastos_variaveis = [t for t in transacoes if t.type == 'despesa_variavel']
         
         # Calcular gastos por dia
@@ -144,15 +144,15 @@ class FinanceCalculator:
             'total_gasto_variavel_mes': sum(gasto['gasto'] for gasto in situacao_dias)
         }
 
-        def debug_daily_status(self, user_id: int, mes: int = None, ano: int = None):
-            """Método para debug - mostra a estrutura real retornada"""
-            status = self.get_daily_budget_status(user_id, mes, ano)
-            print("🔍 DEBUG - Estrutura do daily_status:")
-            print(f"Keys: {list(status.keys()) if status else 'None'}")
-            if status and 'situacao_dias' in status:
-                print(f"Número de dias: {len(status['situacao_dias'])}")
-                if status['situacao_dias']:
-                    print(f"Primeiro dia: {status['situacao_dias'][0]}")
-            return status
+    def debug_daily_status(self, user_id: int, mes: int = None, ano: int = None):
+        """Método para debug - mostra a estrutura real retornada"""
+        status = self.get_daily_budget_status(user_id, mes, ano)
+        print("🔍 DEBUG - Estrutura do daily_status:")
+        print(f"Keys: {list(status.keys()) if status else 'None'}")
+        if status and 'situacao_dias' in status:
+            print(f"Número de dias: {len(status['situacao_dias'])}")
+            if status['situacao_dias']:
+                print(f"Primeiro dia: {status['situacao_dias'][0]}")
+        return status
 
 finance_calculator = FinanceCalculator()

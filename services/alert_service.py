@@ -7,9 +7,9 @@ class AlertService:
         self.db = db_manager
         self.finance_calc = FinanceCalculator()
     
-    def get_daily_budget_alerts(self, user_id: int):
+    def get_daily_budget_alerts(self, telegram_id: int):
         """Alertas baseados no orçamento diário do método Breno - CORRIGIDO"""
-        daily_status = self.finance_calc.get_daily_budget_status(user_id)
+        daily_status = self.finance_calc.get_daily_budget_status(telegram_id)
         alerts = []
         
         # ✅ CORREÇÃO: Verificar se a estrutura existe antes de acessar
@@ -61,10 +61,10 @@ class AlertService:
         
         return alerts
     
-    def get_budget_alerts(self, user_id: int, month: int = None, year: int = None):
+    def get_budget_alerts(self, telegram_id: int, month: int = None, year: int = None):
         """Alertas de orçamento por categoria"""
         try:
-            budget_data = budget_service.get_budgets_with_status(user_id, month, year)
+            budget_data = budget_service.get_budgets_with_status(telegram_id, month, year)
             alerts = []
             
             for alert_msg in budget_data.get('alerts', []):
@@ -79,10 +79,10 @@ class AlertService:
             print(f"❌ Erro em get_budget_alerts: {e}")
             return []
     
-    def get_economy_alerts(self, user_id: int, month: int = None, year: int = None):
+    def get_economy_alerts(self, telegram_id: int, month: int = None, year: int = None):
         """Alertas de economia (método Breno) - CORRIGIDO"""
         try:
-            summary = self.finance_calc.get_monthly_summary(user_id, month, year)
+            summary = self.finance_calc.get_monthly_summary(telegram_id, month, year)
             alerts = []
             
             # ✅ CORREÇÃO: Verificar se as chaves existem
@@ -107,14 +107,14 @@ class AlertService:
             print(f"❌ Erro em get_economy_alerts: {e}")
             return []
     
-    def get_all_alerts(self, user_id: int, month: int = None, year: int = None):
+    def get_all_alerts(self, telegram_id: int, month: int = None, year: int = None):
         """Todos os alertas combinados - CORRIGIDO"""
         alerts = []
         
         try:
-            alerts.extend(self.get_daily_budget_alerts(user_id))
-            alerts.extend(self.get_budget_alerts(user_id, month, year))
-            alerts.extend(self.get_economy_alerts(user_id, month, year))
+            alerts.extend(self.get_daily_budget_alerts(telegram_id))
+            alerts.extend(self.get_budget_alerts(telegram_id, month, year))
+            alerts.extend(self.get_economy_alerts(telegram_id, month, year))
             
             # Ordenar por severidade (high primeiro)
             severity_order = {'high': 0, 'medium': 1, 'low': 2}

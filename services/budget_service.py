@@ -6,7 +6,7 @@ class BudgetService:
     def __init__(self):
         self.db = db_manager
     
-    def set_budget(self, user_id: int, category: str, monthly_limit: float, month: int = None, year: int = None):
+    def set_budget(self, telegram_id: int, category: str, monthly_limit: float, month: int = None, year: int = None):
         """Define orçamento para uma categoria"""
         month = month or datetime.now().month
         year = year or datetime.now().year
@@ -17,7 +17,7 @@ class BudgetService:
                 
                 # Verificar se já existe orçamento
                 budget = session.query(Budget).filter(
-                    Budget.user_id == user_id,
+                    Budget.user_id == telegram_id,
                     Budget.category == category,
                     Budget.month == month,
                     Budget.year == year
@@ -27,7 +27,7 @@ class BudgetService:
                     budget.monthly_limit = monthly_limit
                 else:
                     budget = Budget(
-                        user_id=user_id,
+                        user_id=telegram_id,
                         category=category,
                         monthly_limit=monthly_limit,
                         month=month,
@@ -42,7 +42,7 @@ class BudgetService:
             print(f"❌ Erro ao definir orçamento: {e}")
             return False
     
-    def get_budgets_with_status(self, user_id: int, month: int = None, year: int = None):
+    def get_budgets_with_status(self, telegram_id: int, month: int = None, year: int = None):
         """Retorna orçamentos com status calculado"""
         month = month or datetime.now().month
         year = year or datetime.now().year
@@ -54,7 +54,7 @@ class BudgetService:
                 
                 # Buscar orçamentos do mês
                 budgets = session.query(Budget).filter(
-                    Budget.user_id == user_id,
+                    Budget.user_id == telegram_id,
                     Budget.month == month,
                     Budget.year == year
                 ).all()
@@ -70,7 +70,7 @@ class BudgetService:
                     end_date = f"{year}-{month+1:02d}-01"
                 
                 transactions = session.query(Transaction).filter(
-                    Transaction.user_id == user_id,
+                    Transaction.user_id == telegram_id,
                     Transaction.date >= start_date,
                     Transaction.date < end_date,
                     Transaction.type.in_(['despesa_fixa', 'despesa_variavel'])
