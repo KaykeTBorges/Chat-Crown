@@ -102,7 +102,7 @@ class TransactionsService:
             print(f"❌ Error while fetching transaction by ID: {e}")
             return None
 
-    # ---------------- Filtros ----------------
+    # ---------------- Filters ----------------
     def _apply_search(self, transactions, search_term):
         if search_term:
             term = search_term.lower()
