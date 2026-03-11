@@ -1,12 +1,14 @@
-# streamlit_app/utils.py
 import streamlit as st
 from datetime import datetime
 
+
 def check_authentication():
     """
-    Verifica se o usuário está autenticado.
-    Se não estiver, exibe mensagem e para a execução da página.
-    Retorna o telegram_id do usuário se autenticado.
+    Ensure the current user is authenticated before rendering a page.
+
+    If there is no `telegram_id` in the Streamlit session state, this function
+    shows a warning and stops the page execution. When authentication is OK,
+    it returns the `telegram_id` stored in the session.
     """
     if 'telegram_id' not in st.session_state or not st.session_state['telegram_id']:
         st.warning("🔐 Para acessar esta página, faça login no bot do Telegram.")
@@ -15,8 +17,10 @@ def check_authentication():
 
 def month_year_filter(key_prefix=""):
     """
-    Cria um filtro de mês e ano no Streamlit e retorna os valores selecionados.
-    O `key_prefix` evita conflitos de `st.key` entre páginas.
+    Render a simple month/year selector and return the chosen values.
+
+    The `key_prefix` parameter is used to avoid key collisions between
+    different pages that might also create month/year selectors.
     """
     col1, col2 = st.columns(2)
     with col1:
@@ -28,15 +32,15 @@ def month_year_filter(key_prefix=""):
         )
     with col2:
         year = st.selectbox(
-            "Ano", 
-            list(range(datetime.now().year - 2, datetime.now().year + 3)), 
-            index=2, # Index para o ano atual
-            key=f"{key_prefix}_year"
+            "Ano",
+            list(range(datetime.now().year - 2, datetime.now().year + 3)),
+            index=2,  # Default index pointing at the current year.
+            key=f"{key_prefix}_year",
         )
     return month, year
 
 def display_user_info():
-    """Exibe as informações do usuário na sidebar."""
+    """Show basic user information in the sidebar."""
     user = st.session_state.get('user')
     if user:
         st.sidebar.title(f"👤 {user.first_name or 'Usuário'}")

@@ -3,14 +3,18 @@ from telegram.ext import ContextTypes
 from services.transactions_service import transactions_service
 
 async def delete_confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Mostra mensagem de confirmação antes de excluir."""
+    """Show a confirmation message before deleting a transaction."""
     query = update.callback_query
     await query.answer()
 
     transaction_id = int(query.data.replace("delete_", ""))
     context.user_data["delete_id"] = transaction_id
 
-    t = transactions_service.get_transaction_by_id(transaction_id)
+    # Load the transaction so we can show what will be deleted.
+    t = transactions_service.get_by_id(transaction_id)
+    if not t:
+        await query.edit_message_text("⚠️ Could not find that transaction to delete.")
+        return
 
     text = (
         f"🗑️ *Deseja realmente excluir esta transação?*\n\n"
@@ -29,26 +33,26 @@ async def delete_confirm_handler(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def delete_execute_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Executa a exclusão após confirmação."""
+    """Delete the transaction after the user confirms."""
     query = update.callback_query
     await query.answer()
 
     transaction_id = context.user_data.get("delete_id")
 
     if transaction_id is None:
-        await query.edit_message_text("⚠️ Erro: Nenhuma transação para excluir.")
+        await query.edit_message_text("⚠️ No transaction selected for deletion.")
         return
 
-    deleted = transactions_service.delete_transaction(transaction_id)
+    deleted = transactions_service.delete(transaction_id)
 
     if deleted:
-        await query.edit_message_text("✅ *Transação excluída com sucesso!*", parse_mode="Markdown")
+        await query.edit_message_text("✅ *Transaction deleted successfully!*", parse_mode="Markdown")
     else:
-        await query.edit_message_text("❌ Erro ao excluir a transação.")
+        await query.edit_message_text("❌ Failed to delete the transaction.")
 
 
 async def delete_cancel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Cancela a exclusão."""
+    """Cancel the delete flow."""
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text("✅ Operação cancelada.")
+    await query.edit_message_text("✅ Operation cancelled.")

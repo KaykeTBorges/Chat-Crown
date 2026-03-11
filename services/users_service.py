@@ -1,5 +1,3 @@
-# services/users_service.py
-
 from services.database import db_manager
 from models.user import User
 from datetime import datetime
@@ -7,18 +5,21 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class UsersService:
     @staticmethod
     def get_or_create_user(telegram_user_data):
         """
-        Busca um usuário pelo telegram_id. Se não existir, cria um novo.
-        'telegram_user_data' é o dicionário que vem do widget do Telegram.
+        Get a user by Telegram ID, or create it if it does not exist yet.
+
+        `telegram_user_data` is expected to be the object returned by Telegram
+        (it can be a dict-like object that has keys like "id", "username", etc).
         """
         with db_manager.get_session() as session:
             user = session.query(User).filter_by(telegram_id=telegram_user_data.get('id')).first()
 
             if user:
-                # Atualiza dados caso tenham mudado (ex: nome de usuário)
+                # Keep the database in sync with Telegram profile changes (username/name).
                 updated = False
                 if user.username != telegram_user_data.get('username'):
                     user.username = telegram_user_data.get('username')
@@ -36,7 +37,7 @@ class UsersService:
                     logger.info(f"Usuário atualizado: {user.telegram_id} - {user.username}")
                 return user
 
-            # Cria novo usuário
+            # Create a new local record for this Telegram user.
             user = User(
                 telegram_id=telegram_user_data.get('id'),
                 username=telegram_user_data.get('username'),
@@ -54,11 +55,11 @@ class UsersService:
     @staticmethod
     def get_user_by_telegram_id(telegram_id: int):
         """
-        Busca um usuário usando o telegram_id como chave.
-        Este é o método principal que o Streamlit usará.
+        Fetch a user using the Telegram ID as the main key.
+        This is the method the Streamlit app should use after login.
         """
         with db_manager.get_session() as session:
             return session.query(User).filter_by(telegram_id=telegram_id).first()
 
-# Instância global para fácil acesso
+# Global instance for convenience imports across the project.
 users_service = UsersService()

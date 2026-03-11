@@ -8,7 +8,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle free text messages and try to create a transaction from them."""
+
+    # Make sure the Telegram user exists in the database and get the corresponding model instance.
     user = UsersService.get_or_create_user(update.effective_user)
     user_message = update.message.text
 
@@ -18,14 +22,15 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Não consegui identificar o valor. Ex: 'almoço 45,50'")
             return
 
+        # Use the Telegram ID consistently when creating the transaction.
         transaction = transactions_service.create(
-            user_id=user.id,
-            description=data['description'],
-            amount=data['amount'],
-            category=data['category'],
-            type=data['type'],
+            telegram_id=user.telegram_id,
+            description=data["description"],
+            amount=data["amount"],
+            category=data["category"],
+            type=data["type"],
             date=datetime.now(),
-            detected_by=data['detected_by']
+            detected_by=data["detected_by"],
         )
 
         await update.message.reply_text(f"✅ Transação registrada: {transaction.category} - R$ {transaction.amount:.2f}")

@@ -5,8 +5,8 @@ from services.transactions_service import transactions_service
 from datetime import datetime
 
 async def list_transactions_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Lista transações do mês atual com botões de editar e excluir."""
-    telegram_id = update.effective_user.id # Pega o telegram_id
+    """List current-month transactions with inline edit/delete buttons."""
+    telegram_id = update.effective_user.id  # Read Telegram ID from the message.
     now = datetime.now()
 
     transactions, _ = transactions_service.get_transactions(
@@ -14,7 +14,6 @@ async def list_transactions_handler(update: Update, context: ContextTypes.DEFAUL
         filters={"date_range": "current_month"}
     )
 
-    # Se não houver transações ainda
     if not transactions:
         await update.message.reply_text(
             "📭 Você ainda não tem transações registradas neste mês.\n"

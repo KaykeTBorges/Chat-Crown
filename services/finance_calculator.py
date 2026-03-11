@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from services.database import db_manager
 
+
 class FinanceCalculator:
     def __init__(self):
         self.db = db_manager
@@ -11,6 +12,7 @@ class FinanceCalculator:
         if year is None:
             year = datetime.now().year
         
+        # Load only the transactions for the requested month and user.
         transactions = self._get_monthly_transactions(telegram_id, month, year)
         
         total_renda = sum(t.amount for t in transactions if t.type == 'renda')
@@ -67,11 +69,17 @@ class FinanceCalculator:
         try:
             with self.db.get_session() as session:
                 from models.transaction import Transaction
-                transactions = session.query(Transaction).filter(
-                    Transaction.user_id == telegram_id,
-                    Transaction.date >= f"{year}-{month:02d}-01",
-                    Transaction.date <= f"{year}-{month:02d}-{self._dias_no_mes(month, year)}"
-                ).all()
+
+                # Filter by the user's Telegram ID and the month range.
+                transactions = (
+                    session.query(Transaction)
+                    .filter(
+                        Transaction.telegram_id == telegram_id,
+                        Transaction.date >= f"{year}-{month:02d}-01",
+                        Transaction.date <= f"{year}-{month:02d}-{self._dias_no_mes(month, year)}",
+                    )
+                    .all()
+                )
                 return transactions
         except Exception as e:
             print(f"❌ Erro ao buscar transações: {e}")
@@ -83,8 +91,7 @@ class FinanceCalculator:
         return (datetime(year, month + 1, 1) - datetime(year, month, 1)).days
 
     def get_daily_budget_status(self, telegram_id: int, month: int = None, year: int = None):
-        """Calcula o status do orçamento diário considerando gastos acumulados"""
-        from datetime import datetime, timedelta
+        """Calculate daily budget status for a given user and month."""
         
         if month is None:
             month = datetime.now().month
@@ -93,17 +100,17 @@ class FinanceCalculator:
         
         resumo = self.get_monthly_summary(telegram_id, month, year)
         
-        # Data atual e informações do mês
+        # Current date and basic month info.
         hoje = datetime.now().date()
         primeiro_dia = datetime(year, month, 1).date()
         dias_no_mes = resumo['dias_no_mes']
         dia_do_mes = hoje.day
         
-        # Buscar gastos variáveis do mês
+        # Load only variable expenses for the month. We use those to build a day-by-day view.
         transacoes = self._get_monthly_transactions(telegram_id, month, year)
         gastos_variaveis = [t for t in transacoes if t.type == 'despesa_variavel']
         
-        # Calcular gastos por dia
+        # Group variable expenses by day-of-month.
         gastos_por_dia = {}
         for transacao in gastos_variaveis:
             dia = transacao.date.day
@@ -111,7 +118,7 @@ class FinanceCalculator:
                 gastos_por_dia[dia] = 0
             gastos_por_dia[dia] += transacao.amount
         
-        # Calcular situação dia a dia
+        # Build a list that the UI can render (one entry per day).
         saldo_disponivel = resumo['saldo_disponivel']
         media_diaria = resumo['media_diaria_sugerida']
         saldo_acumulado = 0
@@ -131,7 +138,7 @@ class FinanceCalculator:
                 'ultrapassou': gasto_dia > media_diaria
             })
         
-        # Status do dia atual
+        # Convenience pointer to today's entry (used by alert logic and UI).
         dia_atual = next((d for d in situacao_dias if d['dia'] == dia_do_mes), None)
         
         return {
@@ -144,9 +151,12 @@ class FinanceCalculator:
             'total_gasto_variavel_mes': sum(gasto['gasto'] for gasto in situacao_dias)
         }
 
-    def debug_daily_status(self, user_id: int, mes: int = None, ano: int = None):
-        """Método para debug - mostra a estrutura real retornada"""
-        status = self.get_daily_budget_status(user_id, mes, ano)
+    def debug_daily_status(self, telegram_id: int, month: int = None, year: int = None):
+        """
+        Debug helper that prints the structure returned by `get_daily_budget_status`.
+        Useful when you are adjusting UI code and want to confirm the returned keys.
+        """
+        status = self.get_daily_budget_status(telegram_id, month, year)
         print("🔍 DEBUG - Estrutura do daily_status:")
         print(f"Keys: {list(status.keys()) if status else 'None'}")
         if status and 'situacao_dias' in status:

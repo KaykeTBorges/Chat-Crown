@@ -2,21 +2,22 @@ from services.database import db_manager
 from services.budget_service import budget_service
 from services.finance_calculator import FinanceCalculator
 
+
 class AlertService:
     def __init__(self):
+        # Use shared database manager and calculator to derive alerts.
         self.db = db_manager
         self.finance_calc = FinanceCalculator()
     
     def get_daily_budget_alerts(self, telegram_id: int):
-        """Alertas baseados no orçamento diário do método Breno - CORRIGIDO"""
+        """Build alerts based on the daily budget status for the current month."""
         daily_status = self.finance_calc.get_daily_budget_status(telegram_id)
         alerts = []
         
-        # ✅ CORREÇÃO: Verificar se a estrutura existe antes de acessar
         if not daily_status or 'situacao_dias' not in daily_status:
             return alerts
         
-        # Encontrar o dia atual
+        # Find the current day entry in the daily status list.
         dia_atual = None
         for dia in daily_status['situacao_dias']:
             if dia.get('status') == 'hoje' or 'HOJE' in str(dia.get('data', '')):
@@ -26,11 +27,10 @@ class AlertService:
         if not dia_atual:
             return alerts
         
-        # ✅ CORREÇÃO: Usar as chaves corretas da estrutura existente
         today_spent = dia_atual.get('gasto', 0)
         daily_budget = dia_atual.get('meta_diaria', 0)
         
-        # Alertas de orçamento diário
+        # Build alerts related to the daily budget limit.
         if today_spent > daily_budget:
             excess = today_spent - daily_budget
             alerts.append({
@@ -45,7 +45,6 @@ class AlertService:
                 'severity': 'medium'
             })
         
-        # ✅ CORREÇÃO: Alertas de tendência mensal com chaves corretas
         if 'dias_restantes' in daily_status and daily_status['dias_restantes'] > 0:
             remaining_budget = daily_status.get('saldo_restante_mes', 0)
             remaining_days = daily_status['dias_restantes']
@@ -62,7 +61,7 @@ class AlertService:
         return alerts
     
     def get_budget_alerts(self, telegram_id: int, month: int = None, year: int = None):
-        """Alertas de orçamento por categoria"""
+        """Build alerts for each category budget, based on usage percentage."""
         try:
             budget_data = budget_service.get_budgets_with_status(telegram_id, month, year)
             alerts = []
@@ -80,12 +79,11 @@ class AlertService:
             return []
     
     def get_economy_alerts(self, telegram_id: int, month: int = None, year: int = None):
-        """Alertas de economia (método Breno) - CORRIGIDO"""
+        """Build alerts for savings performance versus the target percentage."""
         try:
             summary = self.finance_calc.get_monthly_summary(telegram_id, month, year)
             alerts = []
             
-            # ✅ CORREÇÃO: Verificar se as chaves existem
             if not summary or 'economia_real_vs_meta' not in summary:
                 return alerts
             
@@ -108,7 +106,7 @@ class AlertService:
             return []
     
     def get_all_alerts(self, telegram_id: int, month: int = None, year: int = None):
-        """Todos os alertas combinados - CORRIGIDO"""
+        """Return all alerts combined and sorted by severity."""
         alerts = []
         
         try:
@@ -125,5 +123,5 @@ class AlertService:
             print(f"❌ Erro em get_all_alerts: {e}")
             return []
 
-# Instância global
+# Global instance, so services/UI can import a ready-to-use alert service.
 alert_service = AlertService()

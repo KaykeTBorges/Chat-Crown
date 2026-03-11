@@ -9,6 +9,7 @@ from utils import check_authentication, month_year_filter
 
 st.set_page_config(page_title="Metas e Orçamentos", page_icon="🎯", layout="wide")
 
+# Ensure the user is authenticated before showing goals and budgets.
 telegram_id = check_authentication()
 st.markdown('<h1 class="main-header">🎯 Metas e Orçamentos</h1>', unsafe_allow_html=True)
 
@@ -28,6 +29,7 @@ with tab1:
                     st.success("✅ Meta criada!"); st.rerun()
                 else: st.error("Preencha os campos obrigatórios.")
     
+    # Load and display progress for the existing financial goals.
     goals = goal_service.get_user_goals(telegram_id)
     if goals:
         df_goals = pd.DataFrame(goals)
@@ -48,6 +50,7 @@ with tab2:
                 if budget_service.set_budget(telegram_id, category, amount, month, year):
                     st.success("✅ Orçamento salvo!"); st.rerun()
     
+    # Load existing budgets and show comparison between planned and actual spending.
     budget_data = budget_service.get_budgets_with_status(telegram_id, month, year)
     if budget_data['budgets']:
         df_budget = pd.DataFrame(budget_data['budgets'])

@@ -7,7 +7,7 @@ from services.transactions_service import transactions_service
 logger = logging.getLogger(__name__)
 
 async def edit_init_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Inicia o processo de edição, mostrando opções."""
+    """Start the edit flow by showing what fields can be changed."""
     query = update.callback_query
     await query.answer()
 
@@ -17,13 +17,13 @@ async def edit_init_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("❌ Erro ao identificar a transação.")
         return
 
-    # NOTA: Precisa de um método no service para buscar por ID
-    t = transactions_service.get_transaction_by_id(transaction_id)
+    # Load the transaction so we can show the current values before editing.
+    t = transactions_service.get_by_id(transaction_id)
     if not t:
         await query.edit_message_text("❌ Transação não encontrada.")
         return
 
-    # Armazena o ID da transação para os próximos passos
+    # Store the transaction ID in user_data so the next steps know what to edit.
     context.user_data["edit_transaction_id"] = transaction_id
 
     text = (
@@ -49,7 +49,7 @@ async def edit_init_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def edit_choice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Processa a escolha do campo a ser editado."""
+    """Store which field the user wants to edit and ask for the new value."""
     query = update.callback_query
     await query.answer()
     
@@ -69,8 +69,8 @@ async def edit_choice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 
 async def edit_process_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Recebe o novo valor e atualiza a transação."""
-    user = update.effective_user
+    """Receive the new value from the user and update the transaction."""
+
     new_value = update.message.text
     field = context.user_data.get("edit_field")
     transaction_id = context.user_data.get("edit_transaction_id")
@@ -79,8 +79,8 @@ async def edit_process_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text("❌ Nenhuma edição em andamento.")
         return
 
-    # Prepara os dados para atualização
-    update_data = {"user_id": user.id}
+    # Prepare only the fields that are allowed to be updated from this flow.
+    update_data = {}
     
     if field == "amount":
         try:
@@ -96,11 +96,11 @@ async def edit_process_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         except ValueError:
             await update.message.reply_text("❌ Data inválida. Use o formato DD/MM/AAAA.")
             return
-    else: # description, category, type
+    else:  # description, category, type
         update_data[field] = new_value
 
-    # NOTA: O service precisa de um método de update flexível
-    success = transactions_service.update_transaction(transaction_id, **update_data)
+    # Call the service to apply the partial update.
+    success = transactions_service.update(transaction_id, **update_data)
 
     if success:
         await update.message.reply_text(f"✅ Campo *{field}* atualizado com sucesso!", parse_mode='Markdown')
@@ -113,12 +113,10 @@ async def edit_process_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def edit_cancel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Cancela o processo de edição."""
+    """Cancel the edit flow and clear any temporary state."""
     query = update.callback_query
     await query.answer()
     await query.edit_message_text("✅ Edição cancelada.")
     context.user_data.clear()
 
-# Adicione estes handlers ao seu bot.py
-# CallbackQueryHandler(edit_choice_handler, pattern="^edit_choice_")
-# CallbackQueryHandler(edit_cancel_handler, pattern="^edit_cancel$")
+# These handlers must be registered in `bot/bot.py` so the callbacks are routed here.

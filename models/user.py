@@ -1,8 +1,13 @@
 # models/user.py
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import Base
+
+
+def current_utc_time():
+    return datetime.now(timezone.utc)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -12,8 +17,8 @@ class User(Base):
     username = Column(String(100))
     first_name = Column(String(100))
     last_name = Column(String(100))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=current_utc_time)
+    updated_at = Column(DateTime, default=current_utc_time, onupdate=current_utc_time)
 
     # Relacionamento com transações
     transactions = relationship(

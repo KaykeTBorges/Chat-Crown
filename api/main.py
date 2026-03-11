@@ -2,34 +2,27 @@
 from fastapi import FastAPI, HTTPException, Form
 import random
 import string
-import time
 
 app = FastAPI(title="Chat Crown Auth API (Simplified)")
 
-# Armazenamento temporário dos códigos.
-# Em produção, USE REDIS ou um banco de dados com expiração.
-# Formato: {"123456": 123456789, "654321": 987654321}
+# In-memory storage for short-lived login codes.
 LOGIN_CODES = {}
 
 def generate_code() -> str:
-    """Gera um código de 6 dígitos."""
+    """Generate a 6-digit code"""
     return ''.join(random.choices(string.digits, k=6))
 
 @app.post("/auth/generate_code")
 async def generate_login_code(telegram_id: int = Form(...)):
     """
-    Endpoint para o BOT gerar um código de login para um usuário.
+    Endpoint for the bot to generate a login code for a user.
     """
-    # Remove códigos antigos deste usuário, se houver
-    old_code_to_remove = None
-    for code, user_id in LOGIN_CODES.items():
-        if user_id == telegram_id:
-            old_code_to_remove = code
-            break
-    if old_code_to_remove:
-        LOGIN_CODES.pop(old_code_to_remove)
+    # Remove any previous codes for this Telegram user, if they exist.
+    codes_to_remove = [code for code, user_id in LOGIN_CODES.items() if user_id == telegram_id]
+    for code in codes_to_remove:
+        LOGIN_CODES.pop(code, None)
 
-    # Gera e armazena o novo código
+    # Generate and store the new one-time code.
     new_code = generate_code()
     LOGIN_CODES[new_code] = telegram_id
     
@@ -40,13 +33,14 @@ async def generate_login_code(telegram_id: int = Form(...)):
 @app.post("/auth/validate_code")
 async def validate_login_code(code: str = Form(...)):
     """
-    Endpoint para o Streamlit validar um código de login.
+    Endpoint for Streamlit to validate a login code.
     """
-    telegram_id = LOGIN_CODES.pop(code, None) # pop() garante que o código seja de uso único
+    # Remove the code from memory so it can only be used once.
+    telegram_id = LOGIN_CODES.pop(code, None)
 
     if telegram_id:
-        print(f"Código {code} validado para o telegram_id: {telegram_id}") # Log para debug
+        print(f"Login code {code} validated for telegram_id: {telegram_id}")
         return {"status": "success", "telegram_id": telegram_id}
     else:
-        print(f"Código {code} inválido ou já usado.") # Log para debug
+        print(f"Login code {code} is invalid or already used.")
         raise HTTPException(status_code=404, detail="Código inválido ou expirado.")

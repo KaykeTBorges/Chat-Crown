@@ -2,25 +2,27 @@ from datetime import datetime
 from sqlalchemy import and_
 from services.database import db_manager
 
+
 class GoalService:
     def __init__(self):
         self.db = db_manager
     
     def create_goal(self, telegram_id: int, name: str, target_amount: float, 
                    deadline: str, category: str = "Outros", priority: int = 1):
-        """Cria uma nova meta financeira"""
+        """Create a new financial goal for the given Telegram user."""
         try:
             with self.db.get_session() as session:
-                from models.goal import FinancialGoal
-                
+                from models.financial_goal import FinancialGoal
+
+                # Goals are linked to the user using the Telegram ID.
                 goal = FinancialGoal(
-                    user_id=telegram_id,
+                    telegram_id=telegram_id,
                     name=name,
                     target_amount=target_amount,
                     current_amount=0.0,
-                    deadline=datetime.strptime(deadline, '%Y-%m-%d').date(),
+                    deadline=datetime.strptime(deadline, "%Y-%m-%d").date(),
                     category=category,
-                    priority=priority
+                    priority=priority,
                 )
                 
                 session.add(goal)
@@ -33,10 +35,10 @@ class GoalService:
             return False
     
     def update_goal_progress(self, goal_id: int, current_amount: float):
-        """Atualiza o progresso de uma meta"""
+        """Update the saved progress of a specific goal."""
         try:
             with self.db.get_session() as session:
-                from models.goal import FinancialGoal
+                from models.financial_goal import FinancialGoal
                 
                 goal = session.query(FinancialGoal).filter(FinancialGoal.id == goal_id).first()
                 if not goal:
@@ -52,10 +54,10 @@ class GoalService:
             return False
     
     def delete_goal(self, goal_id: int):
-        """Exclui uma meta"""
+        """Delete a goal by its ID."""
         try:
             with self.db.get_session() as session:
-                from models.goal import FinancialGoal
+                from models.financial_goal import FinancialGoal
                 
                 goal = session.query(FinancialGoal).filter(FinancialGoal.id == goal_id).first()
                 if goal:
@@ -68,15 +70,15 @@ class GoalService:
             return False
     
     def get_user_goals(self, telegram_id: int, include_completed: bool = True):
-        """Busca metas do usuário"""
+        """Return all goals for a user, optionally skipping completed ones."""
         try:
             with self.db.get_session() as session:
-                from models.goal import FinancialGoal
-                
-                query = session.query(FinancialGoal).filter(FinancialGoal.user_id == telegram_id)
+                from models.financial_goal import FinancialGoal
+
+                query = session.query(FinancialGoal).filter(FinancialGoal.telegram_id == telegram_id)
                 
                 if not include_completed:
-                    # Filtra metas não concluídas (progresso < 100%)
+                    # Skip completed goals (progress < 100%).
                     query = query.filter(FinancialGoal.current_amount < FinancialGoal.target_amount)
                 
                 goals = query.order_by(
@@ -91,15 +93,15 @@ class GoalService:
             return []
     
     def get_goal_by_id(self, goal_id: int):
-        """Busca uma meta específica"""
+        """Fetch a single goal by its database ID."""
         try:
             with self.db.get_session() as session:
-                from models.goal import FinancialGoal
+                from models.financial_goal import FinancialGoal
                 goal = session.query(FinancialGoal).filter(FinancialGoal.id == goal_id).first()
                 return goal.to_dict() if goal else None
         except Exception as e:
             print(f"❌ Erro ao buscar meta: {e}")
             return None
 
-# Instância global
+# Global instance so other modules can import `goal_service` directly.
 goal_service = GoalService()

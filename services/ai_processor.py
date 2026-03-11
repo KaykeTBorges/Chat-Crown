@@ -4,12 +4,17 @@ from groq import Groq
 from config.config import config
 from datetime import datetime
 
+
 class AIProcessor:
+    """Helper responsible for turning free text into structured transaction data."""
+
     def __init__(self):
+        # If an external key is configured, we can optionally enhance detection.
         self.client = Groq(api_key=config.GROQ_API_KEY) if config.GROQ_API_KEY else None
         self.setup_categories()
     
     def setup_categories(self):
+        """Define default keyword groups for each high-level category."""
         self.categories = {
             'despesas_fixas': {
                 'Moradia': ['aluguel', 'luz', 'água', 'condomínio', 'internet', 'telefone', 'gás'],
@@ -40,19 +45,28 @@ class AIProcessor:
         }
     
     def detect_expense(self, message: str) -> dict:
+        """
+        Try to extract a structured expense from a free text message.
+
+        The primary strategy is based on regular expressions and keyword groups.
+        If that cannot find an amount and an external client is available,
+        we optionally try to refine the detection, but always fall back to regex.
+        """
         regex_result = self._detect_with_regex(message)
-        
-        if regex_result['amount'] is None and self.client:
+
+        if regex_result["amount"] is None and self.client:
             try:
                 ai_result = self._detect_with_ai(message)
-                if ai_result['confidence'] > 0.7:
+                if ai_result["confidence"] > 0.7:
                     return ai_result
             except Exception as e:
-                print(f"❌ Erro na IA: {e}. Continuando com regex...")
-        
+                print(f"❌ Error while calling external client: {e}. Falling back to regex...")
+
         return regex_result
     
     def _detect_with_regex(self, message: str) -> dict:
+        """Extract amount, category and type using only regular expressions and keywords."""
+
         amount_patterns = [
             r'R\$\s*(\d+[.,]\d{2})',
             r'R\$\s*(\d+)',
@@ -110,6 +124,7 @@ class AIProcessor:
                             confidence = 0.7
                             break
         
+        # Remove numeric parts from the original message to get a short description.
         description = re.sub(r'R\$\s*\d+[.,]?\d*', '', message).strip()
         description = re.sub(r'\d+[.,]?\d*', '', description).strip()
         

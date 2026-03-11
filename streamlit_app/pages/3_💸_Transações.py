@@ -7,10 +7,10 @@ from utils import check_authentication
 
 st.set_page_config(page_title="Transações", page_icon="💸", layout="wide")
 
-# --- Autenticação e Estado da Página ---
+# --- Authentication and page state ---
 telegram_id = check_authentication()
 
-# Estado para controlar qual transação está sendo editada
+# Track which transaction is being edited and the current pagination page.
 if 'editing_transaction_id' not in st.session_state:
     st.session_state.editing_transaction_id = None
 if 'current_page' not in st.session_state:
@@ -19,10 +19,10 @@ if 'current_page' not in st.session_state:
 st.markdown('<h1 class="main-header">💸 Gerenciar Transações</h1>', unsafe_allow_html=True)
 
 # ==============================================================================
-# BLOCO 1: FORMULÁRIO DE CRIAÇÃO / EDIÇÃO
+# Block 1: Create / Edit form
 # ==============================================================================
 def show_transaction_form(transaction_to_edit=None):
-    """Exibe o formulário para criar ou editar uma transação."""
+    """Render a form to create a new transaction or edit an existing one."""
     is_editing = transaction_to_edit is not None
     title = "✏️ Editar Transação" if is_editing else "➕ Adicionar Nova Transação"
     
@@ -81,12 +81,8 @@ def show_transaction_form(transaction_to_edit=None):
                         st.error("❌ Erro ao criar a transação.")
 
 
-# Verifica se há uma transação para editar
+# If we have an ID in session_state, load that transaction and show the edit form.
 if st.session_state.editing_transaction_id:
-    # Nota: Idealmente, o service teria um método get_by_id. Se não tiver, isso falhará.
-    # Vamos assumir que você pode obter a transação de alguma forma.
-    # Uma solução rápida é buscar da lista atual, mas não é ideal.
-    # Por agora, vamos criar um método fictício no service para ilustrar.
     transaction_to_edit = transactions_service.get_by_id(st.session_state.editing_transaction_id)
     if transaction_to_edit:
         show_transaction_form(transaction_to_edit)
@@ -94,14 +90,14 @@ if st.session_state.editing_transaction_id:
         st.error("Transação não encontrada.")
         st.session_state.editing_transaction_id = None
 else:
-    # Mostra o formulário de criação
+    # Default view: show the create form.
     show_transaction_form()
 
 st.markdown("---")
 
 
 # ==============================================================================
-# BLOCO 2: FILTROS E LISTA DE TRANSAÇÕES
+# Block 2: Filters and transaction list
 # ==============================================================================
 with st.expander("🔍 Filtros Avançados", expanded=False):
     col1, col2, col3, col4 = st.columns(4)
@@ -125,7 +121,7 @@ filters = {
     "sort_by": sort_by
 }
 
-# Buscar transações do serviço
+# Fetch transactions from the service using the current filters and page.
 transactions, total_pages = transactions_service.get_transactions(
     telegram_id=telegram_id,
     filters=filters,
@@ -133,7 +129,7 @@ transactions, total_pages = transactions_service.get_transactions(
     items_per_page=items_per_page
 )
 
-# Exibir transações
+# Render the transaction list.
 if transactions:
     for t in transactions:
         with st.container():
@@ -146,7 +142,7 @@ if transactions:
                 st.markdown(f"**Valor:** R$ {t.amount:,.2f}")
             
             with col_actions:
-                st.write("") # Espaço vertical
+                st.write("")  # Simple vertical spacing.
                 if st.button("✏️", key=f"edit_{t.id}", help="Editar"):
                     st.session_state.editing_transaction_id = t.id
                     st.rerun()
@@ -163,7 +159,7 @@ else:
 
 
 # ==============================================================================
-# BLOCO 3: PAGINAÇÃO
+# Block 3: Pagination
 # ==============================================================================
 if total_pages > 1:
     col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 1])

@@ -4,10 +4,12 @@ from utils import check_authentication
 
 st.set_page_config(page_title="Início Rápido", page_icon="🚀", layout="wide")
 
+# Check if the user is logged in and get their Telegram ID.
 telegram_id = check_authentication()
 
 st.markdown('<h1 class="main-header">🚀 Início Rápido</h1>', unsafe_allow_html=True)
 
+# --- Quick access navigation cards ---
 st.subheader("⚡ Acesso Rápido")
 col1, col2, col3, col4 = st.columns(4)
 cards = [
@@ -24,6 +26,7 @@ for i, card in enumerate(cards):
 st.markdown("---")
 st.subheader("📋 Últimas Transações")
 try:
+    # Load a small list of the most recent transactions for this user.
     recent_transactions = transactions_service.get_recent_transactions(telegram_id, limit=5)
     if recent_transactions:
         for t in recent_transactions:

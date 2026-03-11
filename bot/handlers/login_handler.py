@@ -4,19 +4,19 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from config.config import config
 
-# URL da sua API local
+# Auth API base URL (FastAPI).
 API_URL = config.API_URL
-# URL do seu app Streamlit
+# Streamlit app public URL (where the user enters the code).
 STREAMLIT_URL = config.STREAMLIT_URL
 
 async def login_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Gera um código de acesso e envia para o usuário."""
+    """Generate a one-time login code and send it back to the Telegram user."""
     telegram_id = update.effective_user.id
     
     try:
-        # Chama a API para gerar o código
+        # Ask the auth API to generate a one-time code for this Telegram ID.
         response = requests.post(f"{API_URL}/auth/generate_code", data={"telegram_id": telegram_id})
-        response.raise_for_status() # Lança erro se a requisição falhar
+        response.raise_for_status()  # Raise if the HTTP request failed.
         
         data = response.json()
         login_code = data.get("code")

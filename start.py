@@ -5,18 +5,17 @@ import time
 import os
 import signal
 
-# Define o diretório raiz do projeto
+# Define the project root directory.
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-# Adiciona o diretório raiz ao PYTHONPATH para os subprocessos
-# Esta é a chave para que os imports funcionem!
+# Add the project root to PYTHONPATH for subprocesses.
+# This is important so that imports inside child processes keep working.
 ENV = os.environ.copy()
 ENV["PYTHONPATH"] = PROJECT_ROOT
 
 def run_service(command_args, name):
-    """Roda um serviço em um novo processo com o ambiente correto."""
+    """Start a service in a new process with the correct environment."""
     print(f"🚀 Iniciando {name}...")
-    # Usamos sys.executable para o Python do UV e passamos o ENV customizado
     process = subprocess.Popen(
         [sys.executable] + command_args, 
         cwd=PROJECT_ROOT, 
@@ -25,7 +24,7 @@ def run_service(command_args, name):
     return process
 
 def main():
-    """Função principal que inicia e gerencia os serviços."""
+    """Main function that starts and manages the API and Streamlit services."""
     api_process = None
     app_process = None
 
@@ -46,7 +45,7 @@ def main():
         print("   - App: http://localhost:8501")
         print("\nPressione Ctrl+C para parar todos os serviços.")
 
-        # Mantém o script principal ativo
+        # Keep the main script running while child processes are alive.
         while True:
             time.sleep(1)
 

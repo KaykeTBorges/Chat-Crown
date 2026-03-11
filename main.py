@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 
 from dotenv import load_dotenv
-load_dotenv()  # ✅ Carrega .env antes de tudo!
+
+# Load environment variables before anything else so config and services can see them.
+load_dotenv()
 
 """
-Sistema Financeiro Pessoal do Kayke
-Chat Crown + Método Breno Nogueira
+Entry point for running the Telegram bot + database initialization.
+This script prepares the database and then starts listening for bot updates.
 """
 
 import logging
 from services.database import db_manager
-import models  # importa todos os models para garantir mapeamento
+import models  # Import all models to ensure mappings are registered before creating tables.
 from bot.bot import bot
 
-# Configuração de logging
+# Basic logging configuration for the whole application.
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
+
 def setup_database():
-    """
-    Cria todas as tabelas definidas nos models se não existirem
-    e testa a conexão com o banco.
-    """
+    """Create all tables (if needed) and verify the database connection."""
     try:
         db_manager.test_connection()
         logger.info("✅ Conexão com o banco de dados OK!")
@@ -33,10 +33,13 @@ def setup_database():
         raise
 
 def setup():
+    """High-level setup hook before actually starting the bot."""
     print("🚀 Inicializando Sistema Financeiro Pessoal...")
     setup_database()
 
+
 def main():
+    """Run the setup and then start the Telegram bot loop."""
     setup()
 
     print("\n🎯 Sistema pronto!")

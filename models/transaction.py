@@ -1,8 +1,13 @@
 # models/transaction.py
 from sqlalchemy import Column, Integer, String, Float, DateTime, Date, Enum, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import Base
+
+def current_utc_time():
+    return datetime.now(timezone.utc)
+def current_utc_date():
+    return datetime.now(timezone.utc).date()
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -11,7 +16,7 @@ class Transaction(Base):
     telegram_id = Column(Integer, ForeignKey("users.telegram_id"), nullable=False, index=True)
     user = relationship("User", back_populates="transactions")
 
-    # Tipos: renda, despesa_fixa, despesa_variavel, economia
+    # Allowed transaction types.
     type = Column(
         Enum("renda", "despesa_fixa", "despesa_variavel", "economia", name="transaction_type"),
         nullable=False
@@ -19,13 +24,13 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     category = Column(String(100), nullable=False)
     description = Column(String(200))
-    date = Column(Date, nullable=False, default=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    date = Column(Date, nullable=False, default=current_utc_date)
+    created_at = Column(DateTime, default=current_utc_time)
+    updated_at = Column(DateTime, default=current_utc_time, onupdate=current_utc_time)
 
-    # Campos extras
-    detected_by = Column(String(50), default="manual")  # manual ou IA
-    original_message = Column(String(500))  # mensagem original do bot
+    # Extra fields that help tracking how the record was created.
+    detected_by = Column(String(50), default="manual")  # e.g. "manual", "regex", "groq"
+    original_message = Column(String(500))  # raw text message that originated this transaction (optional)
 
     def __repr__(self):
         return (
@@ -33,7 +38,7 @@ class Transaction(Base):
             f"amount={self.amount}, category={self.category})>"
         )
 
-    # Propriedades auxiliares (sem mudanças)
+    # Convenience properties for UI/business logic.
     @property
     def is_income(self):
         return self.type == "renda"
@@ -48,5 +53,5 @@ class Transaction(Base):
 
     @property
     def signed_amount(self):
-        """Retorna positivo para renda e negativo para despesas/economia"""
+        """Return a signed amount: income is positive, expenses/savings are negative."""
         return self.amount if self.is_income else -self.amount

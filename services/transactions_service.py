@@ -7,40 +7,41 @@ from services.ai_processor import ai_processor
 
 class TransactionsService:
     def __init__(self):
-        self.categories = ai_processor.categories  # categorias padrão
+        # Default categories used by the text processor.
+        self.categories = ai_processor.categories
 
     # ---------------- CRUD ----------------
-    def get_transactions(self, telegram_id, filters=None, page=0, items_per_page=25):
+    def get_transactions(self, telegram_id: int, filters=None, page: int = 0, items_per_page: int = 25):
         """
-        Retorna transações filtradas, ordenadas e paginadas.
+        Return transactions for a user, after applying filters, sorting and pagination.
         """
         filters = filters or {}
         transactions = self._get_all_transactions(telegram_id)
 
-        # filtros
+        # Apply filters in memory.
         transactions = self._apply_search(transactions, filters.get("search_term"))
         transactions = self._apply_category_filter(transactions, filters.get("category"))
         transactions = self._apply_type_filter(transactions, filters.get("type"))
         transactions = self._apply_date_filter(transactions, filters.get("date_range"))
 
-        # ordenação
+        # Then apply sorting.
         transactions = self._apply_sort(transactions, filters.get("sort_by"))
 
-        # paginação
+        # Finally, calculate pagination slice.
         total_pages = max(1, (len(transactions) + items_per_page - 1) // items_per_page)
         start = page * items_per_page
         end = start + items_per_page
         return transactions[start:end], total_pages
 
-    def _get_all_transactions(self, telegram_id):
+    def _get_all_transactions(self, telegram_id: int):
         try:
             with db_manager.get_session() as session:
                 return session.query(Transaction).filter(Transaction.telegram_id == telegram_id).all()
         except Exception as e:
-            print(f"Erro ao buscar transações: {e}")
+            print(f"❌ Error while fetching transactions: {e}")
             return []
 
-    def create(self, telegram_id, description, amount, category, type, date, detected_by="manual"):
+    def create(self, telegram_id: int, description: str, amount: float, category: str, type: str, date, detected_by: str = "manual"):
         try:
             with db_manager.get_session() as session:
                 t = Transaction(
@@ -57,10 +58,10 @@ class TransactionsService:
                 session.refresh(t)
                 return t
         except Exception as e:
-            print(f"Erro ao criar transação: {e}")
+            print(f"❌ Error while creating transaction: {e}")
             return None
 
-    def update(self, transaction_id, **kwargs):
+    def update(self, transaction_id: int, **kwargs):
         try:
             with db_manager.get_session() as session:
                 t = session.query(Transaction).filter(Transaction.id == transaction_id).first()
@@ -72,7 +73,7 @@ class TransactionsService:
                 session.commit()
                 return True
         except Exception as e:
-            print(f"Erro ao atualizar transação: {e}")
+            print(f"❌ Error while updating transaction: {e}")
             return False
 
     def delete(self, transaction_id):
@@ -85,19 +86,20 @@ class TransactionsService:
                     return True
                 return False
         except Exception as e:
-            print(f"Erro ao excluir transação: {e}")
+            print(f"❌ Error while deleting transaction: {e}")
             return False
 
     def get_by_id(self, transaction_id: int):
         """
-        Busca uma única transação pelo seu ID.
-        Essencial para a funcionalidade de edição.
+        Fetch a single transaction by its ID.
+
+        This is important for edit/delete flows that start from a selected record.
         """
         try:
             with db_manager.get_session() as session:
                 return session.query(Transaction).filter(Transaction.id == transaction_id).first()
         except Exception as e:
-            print(f"Erro ao buscar transação por ID: {e}")
+            print(f"❌ Error while fetching transaction by ID: {e}")
             return None
 
     # ---------------- Filtros ----------------
@@ -162,5 +164,5 @@ class TransactionsService:
                 .all()
             )
 
-# instancia global
+# Global instance to be used across the project.
 transactions_service = TransactionsService()

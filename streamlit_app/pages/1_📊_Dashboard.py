@@ -6,16 +6,17 @@ from utils import check_authentication, month_year_filter
 
 st.set_page_config(page_title="Dashboard", page_icon="📊", layout="wide")
 
+# Authentication and time filter for this page.
 telegram_id = check_authentication()
 month, year = month_year_filter("dashboard")
 
 st.markdown('<h1 class="main-header">📊 Dashboard Financeiro</h1>', unsafe_allow_html=True)
 
-# --- SEÇÃO DE ALERTAS DO SISTEMA ---
+# --- System alerts section ---
 st.subheader("🔔 Alertas do Sistema")
 try:
-    # Esta parte depende de você ter o `alert_service.get_all_alerts()`
-    # Se não tiver, pode remover este bloco try/except
+    # This part depends on `alert_service.get_all_alerts()`.
+    # If the service is not configured, the NameError is handled below.
     alerts = alert_service.get_all_alerts(telegram_id, month, year)
     if alerts:
         for alert in alerts:
@@ -34,7 +35,7 @@ except Exception as e:
 
 st.markdown("---")
 
-# --- LÓGICA PRINCIPAL DO DASHBOARD ---
+# --- Main monthly summary logic ---
 resumo = finance_calculator.get_monthly_summary(telegram_id, month, year)
 
 if resumo['transacoes_count'] == 0:

@@ -7,17 +7,17 @@ from utils import check_authentication, month_year_filter
 
 st.set_page_config(page_title="Relatórios", page_icon="📈", layout="wide")
 
+# Authentication and month/year filter used for the reports.
 telegram_id = check_authentication()
 month, year = month_year_filter("reports")
 
 st.markdown('<h1 class="main-header">📈 Relatórios Detalhados</h1>', unsafe_allow_html=True)
 
-# Obter transações do mês (simplificado, sem acesso direto ao BD)
-# Idealmente, você teria um método no transactions_service para isso.
-# Por ora, vamos usar o filtro existente.
+# Get transactions for the current month using the existing service filters.
+# Ideally, the service would expose a dedicated method for this use case.
 filters = {"date_range": "current_month", "sort_by": "date_asc"}
 if month != datetime.now().month or year != datetime.now().year:
-    # Lógica customizada para outros meses/anos seria necessária
+    # Custom logic for loading historical data would be needed here.
     st.info("Relatórios personalizados para outros meses ainda não implementados. Mostrando o mês atual.")
     
 transactions, _ = transactions_service.get_transactions(telegram_id=telegram_id, filters=filters)

@@ -6,15 +6,15 @@ from config.config import config
 
 st.set_page_config(page_title="Sistema Financeiro", page_icon="💰", layout="wide")
 
-# --- LÓGICA DE AUTENTICAÇÃO ---
+# --- Authentication logic ---
 
-# Se o usuário já está logado, mostra o app
+# If the user is already logged in, show the main app.
 if 'telegram_id' in st.session_state and st.session_state['telegram_id']:
-    # Carrega os dados do usuário se ainda não foram carregados
+    # Load the user model once and keep it in session_state.
     if 'user' not in st.session_state:
         st.session_state['user'] = users_service.get_user_by_telegram_id(st.session_state['telegram_id'])
 
-    # --- BLOCO DA INTERFACE DO USUÁRIO LOGADO ---
+    # --- Logged-in UI block ---
     from utils import display_user_info
     display_user_info()
 
@@ -41,7 +41,7 @@ if 'telegram_id' in st.session_state and st.session_state['telegram_id']:
     if page in page_mapping:
         st.switch_page(page_mapping[page])
 
-# Se não está logado, mostra a página de login
+# If the user is not logged in, show the login screen.
 else:
     st.markdown('<h1 class="main-header">👑 Chat Crown - Login</h1>', unsafe_allow_html=True)
     
@@ -62,7 +62,7 @@ else:
                             data = response.json()
                             telegram_id = data.get("telegram_id")
                             
-                            # Cria a sessão do usuário
+                            # Create a session for this user so other pages can read it.
                             st.session_state['telegram_id'] = telegram_id
                             st.session_state['user'] = users_service.get_user_by_telegram_id(telegram_id)
                             

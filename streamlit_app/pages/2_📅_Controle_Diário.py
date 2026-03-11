@@ -6,6 +6,7 @@ from utils import check_authentication, month_year_filter
 
 st.set_page_config(page_title="Controle Diário", page_icon="📅", layout="wide")
 
+# Authentication and month/year selection for this daily view.
 telegram_id = check_authentication()
 month, year = month_year_filter("daily")
 
@@ -20,7 +21,7 @@ if not status_diario or not status_diario.get('situacao_dias'):
     st.warning("Nenhum dado disponível para controle diário.")
     st.stop()
 
-# --- ALERTAS CONTEXTUAIS DO DIA ---
+# --- Contextual alerts for the current day ---
 st.subheader("🔔 Recomendações do Dia")
 dia_atual = next((d for d in status_diario['situacao_dias'] if d.get('status') == 'hoje'), None)
 
@@ -39,7 +40,7 @@ else:
 
 st.markdown("---")
 
-# --- MÉTRICAS E GRÁFICOS ---
+# --- Monthly overview metrics and charts ---
 st.subheader("📊 Resumo do Mês")
 col1, col2, col3 = st.columns(3)
 col1.metric("Gasto Variável", f"R$ {status_diario['total_gasto_variavel_mes']:,.2f}")

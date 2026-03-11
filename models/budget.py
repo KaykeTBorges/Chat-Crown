@@ -1,7 +1,12 @@
 # models/budget.py
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import Base
+
+
+def current_utc_time():
+    return datetime.now(timezone.utc)
+
 
 class Budget(Base):
     __tablename__ = "budgets"
@@ -14,7 +19,7 @@ class Budget(Base):
     monthly_limit = Column(Float, nullable=False)
     month = Column(Integer, nullable=False)
     year = Column(Integer, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=current_utc_time)
     
     def to_dict(self):
         return {
