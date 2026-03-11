@@ -72,45 +72,6 @@ The primary identifier is the unique `telegram_id`, ensuring security and conven
 
 ---
 
-## 🚀 Getting Started
-
-Follow these steps to get a copy of the project up and running on your local machine.
-
-### Prerequisites
-
-- Python 3.10 or higher
-- [`uv`](https://github.com/astral-sh/uv) for fast dependency management.
-
-### Installation
-
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/your-username/chat-crown.git
-    cd chat-crown
-    ```
-
-2.  **Install dependencies**
-    ```bash
-    uv sync
-    ```
-
-3.  **Configure environment variables**
-    Create a `.env` file in the root directory and add the necessary tokens and configurations (see `config/config.py` for details).
-    ```env
-    TELEGRAM_BOT_TOKEN="your_bot_token_here"
-    DATABASE_URL="sqlite:///./finance.db" # or your PostgreSQL URL
-    ```
-
-4.  **Run the application**
-    The `start.py` script will launch both the FastAPI backend and the Streamlit app.
-    ```bash
-    uv run start.py
-    ```
-
-Now, you can interact with your bot on Telegram and access the web dashboard at the URL provided in the terminal (usually `http://localhost:8501`).
-
----
-
 ## 📁 Project Structure
 
 ```
@@ -122,17 +83,6 @@ chat-crown/
 ├── models/          # SQLAlchemy Database Models
 └── config/          # Configuration management
 ```
-
----
-
-## 🗺️ Roadmap
-
-- [ ] **Real-time Webhooks**: For instant bot responses and notifications.
-- [ ] **Advanced AI Insights**: Predictive spending analysis and personalized advice.
-- [ ] **Investment Tracking**: Monitor stocks, crypto, and other investments.
-- [ ] **Mobile Application**: A native app for an enhanced on-the-go experience.
-- [ ] **Multi-currency Support**: Manage finances in different currencies.
-- [ ] **Export & Integrations**: Data export (OFX) and integration with external tools.
 
 ---
 
