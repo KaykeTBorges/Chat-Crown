@@ -2,6 +2,10 @@ import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 from datetime import date, timedelta
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 from services.goal_service import goal_service
 from services.budget_service import budget_service
 from services.ai_processor import ai_processor

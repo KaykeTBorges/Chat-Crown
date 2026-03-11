@@ -1,4 +1,8 @@
 import streamlit as st
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 from services.transactions_service import transactions_service
 from utils import check_authentication
 

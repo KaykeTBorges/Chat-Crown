@@ -1,5 +1,9 @@
 import streamlit as st
 import plotly.graph_objects as go
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 from services.finance_calculator import finance_calculator
 from services.alert_service import alert_service 
 from utils import check_authentication, month_year_filter

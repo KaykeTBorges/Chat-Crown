@@ -1,6 +1,10 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 from services.transactions_service import transactions_service
 from services.ai_processor import ai_processor # Para as categorias
 from utils import check_authentication

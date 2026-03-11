@@ -1,6 +1,10 @@
 # streamlit_app/app.py
 import streamlit as st
 import requests
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 from services.users_service import users_service
 from config.config import config
 
