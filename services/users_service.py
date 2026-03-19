@@ -1,6 +1,6 @@
 from services.database import db_manager
 from models.user import User
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class UsersService:
                     user.last_name = telegram_user_data.get('last_name')
                     updated = True
                 if updated:
-                    user.updated_at = datetime.utcnow()
+                    user.updated_at = datetime.now(timezone.utc)
                     session.commit()
                     session.refresh(user)
                     logger.info(f"Usuário atualizado: {user.telegram_id} - {user.username}")
@@ -43,8 +43,8 @@ class UsersService:
                 username=telegram_user_data.get('username'),
                 first_name=telegram_user_data.get('first_name'),
                 last_name=telegram_user_data.get('last_name'),
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
             )
             session.add(user)
             session.commit()

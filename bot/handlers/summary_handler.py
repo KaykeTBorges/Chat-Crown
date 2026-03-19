@@ -14,8 +14,8 @@ async def summary_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Ensure the Telegram user exists in the database and get the model instance.
         user = UsersService.get_or_create_user(update.effective_user)
 
-        # Use the internal database ID, not the raw Telegram ID, for calculations.
-        resumo = finance_calculator.get_monthly_summary(user.id) 
+        # Use the Telegram ID consistently (all services filter by telegram_id).
+        resumo = finance_calculator.get_monthly_summary(user.telegram_id) 
         
         if resumo['transacoes_count'] == 0:
             await update.message.reply_text(

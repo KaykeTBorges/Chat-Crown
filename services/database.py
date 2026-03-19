@@ -1,7 +1,10 @@
 # services/database.py
+import logging
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from config.config import config
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseManager:
@@ -25,10 +28,11 @@ class DatabaseManager:
             bind=self.engine,
             autoflush=False,
             autocommit=False,
+            expire_on_commit=False,
             future=True,
         )
 
-        print(f"✅ Database engine created for URL: {self.database_url}")
+        logger.info("✅ Database engine created successfully")
 
     def get_session(self):
         """Return a new database session. Caller is responsible for closing it."""
@@ -40,15 +44,15 @@ class DatabaseManager:
             from models.base import Base
 
             Base.metadata.create_all(bind=self.engine)
-            print("🗃️ Database tables checked/created successfully")
+            logger.info("🗃️ Database tables checked/created successfully")
         except Exception as e:
-            print(f"❌ Error while creating tables: {e}")
+            logger.error(f"❌ Error while creating tables: {e}")
 
     def test_connection(self):
         """Run a very small query just to confirm the database is reachable."""
         with self.get_session() as session:
             session.execute(text("SELECT 1"))
-        print("✅ Database connection test passed")
+        logger.info("✅ Database connection test passed")
 
 
 db_manager = DatabaseManager()

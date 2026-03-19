@@ -76,7 +76,8 @@ async def edit_process_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     transaction_id = context.user_data.get("edit_transaction_id")
 
     if not all([field, transaction_id]):
-        await update.message.reply_text("❌ Nenhuma edição em andamento.")
+        # No edit in progress — do nothing so the message falls through
+        # to the transaction handler registered in group 1.
         return
 
     # Prepare only the fields that are allowed to be updated from this flow.

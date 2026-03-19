@@ -1,5 +1,9 @@
+import logging
 from datetime import datetime, timedelta
 from services.database import db_manager
+from models.transaction import Transaction
+
+logger = logging.getLogger(__name__)
 
 
 class FinanceCalculator:
@@ -68,7 +72,6 @@ class FinanceCalculator:
     def _get_monthly_transactions(self, telegram_id: int, month: int, year: int):
         try:
             with self.db.get_session() as session:
-                from models.transaction import Transaction
 
                 # Filter by the user's Telegram ID and the month range.
                 transactions = (
@@ -82,7 +85,7 @@ class FinanceCalculator:
                 )
                 return transactions
         except Exception as e:
-            print(f"❌ Erro ao buscar transações: {e}")
+            logger.error(f"Erro ao buscar transações: {e}")
             return []
     
     def _dias_no_mes(self, month: int, year: int):

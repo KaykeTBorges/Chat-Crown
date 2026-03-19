@@ -1,6 +1,11 @@
+import logging
 from datetime import datetime
 from sqlalchemy import and_
 from services.database import db_manager
+from models.budget import Budget
+from models.transaction import Transaction
+
+logger = logging.getLogger(__name__)
 
 
 class BudgetService:
@@ -14,7 +19,6 @@ class BudgetService:
         
         try:
             with self.db.get_session() as session:
-                from models.budget import Budget
 
                 # Check if there is already a budget for this user/category/month.
                 budget = (
@@ -44,7 +48,7 @@ class BudgetService:
                 return True
                 
         except Exception as e:
-            print(f"❌ Erro ao definir orçamento: {e}")
+            logger.error(f"Erro ao definir orçamento: {e}")
             return False
     
     def get_budgets_with_status(self, telegram_id: int, month: int = None, year: int = None):
@@ -54,8 +58,6 @@ class BudgetService:
         
         try:
             with self.db.get_session() as session:
-                from models.budget import Budget
-                from models.transaction import Transaction
 
                 # Load all budgets for the user and the given month.
                 budgets = (
@@ -131,7 +133,7 @@ class BudgetService:
                 }
                 
         except Exception as e:
-            print(f"❌ Erro ao buscar orçamentos: {e}")
+            logger.error(f"Erro ao buscar orçamentos: {e}")
             return {'budgets': [], 'alerts': []}
 
 # Global instance so other modules can import `budget_service` directly.

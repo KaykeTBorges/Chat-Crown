@@ -1,6 +1,10 @@
+import logging
 from datetime import datetime
 from sqlalchemy import and_
 from services.database import db_manager
+from models.financial_goal import FinancialGoal
+
+logger = logging.getLogger(__name__)
 
 
 class GoalService:
@@ -12,7 +16,6 @@ class GoalService:
         """Create a new financial goal for the given Telegram user."""
         try:
             with self.db.get_session() as session:
-                from models.financial_goal import FinancialGoal
 
                 # Goals are linked to the user using the Telegram ID.
                 goal = FinancialGoal(
@@ -27,18 +30,18 @@ class GoalService:
                 
                 session.add(goal)
                 session.commit()
-                print(f"✅ Meta criada: {name} - R$ {target_amount:.2f}")
+                logger.info(f"Meta criada: {name} - R$ {target_amount:.2f}")
                 return True
                 
         except Exception as e:
-            print(f"❌ Erro ao criar meta: {e}")
+            logger.error(f"Erro ao criar meta: {e}")
             return False
     
     def update_goal_progress(self, goal_id: int, current_amount: float):
         """Update the saved progress of a specific goal."""
         try:
             with self.db.get_session() as session:
-                from models.financial_goal import FinancialGoal
+
                 
                 goal = session.query(FinancialGoal).filter(FinancialGoal.id == goal_id).first()
                 if not goal:
@@ -50,14 +53,14 @@ class GoalService:
                 return True
                 
         except Exception as e:
-            print(f"❌ Erro ao atualizar meta: {e}")
+            logger.error(f"Erro ao atualizar meta: {e}")
             return False
     
     def delete_goal(self, goal_id: int):
         """Delete a goal by its ID."""
         try:
             with self.db.get_session() as session:
-                from models.financial_goal import FinancialGoal
+
                 
                 goal = session.query(FinancialGoal).filter(FinancialGoal.id == goal_id).first()
                 if goal:
@@ -66,14 +69,14 @@ class GoalService:
                     return True
                 return False
         except Exception as e:
-            print(f"❌ Erro ao excluir meta: {e}")
+            logger.error(f"Erro ao excluir meta: {e}")
             return False
     
     def get_user_goals(self, telegram_id: int, include_completed: bool = True):
         """Return all goals for a user, optionally skipping completed ones."""
         try:
             with self.db.get_session() as session:
-                from models.financial_goal import FinancialGoal
+
 
                 query = session.query(FinancialGoal).filter(FinancialGoal.telegram_id == telegram_id)
                 
@@ -89,7 +92,7 @@ class GoalService:
                 return [goal.to_dict() for goal in goals]
                 
         except Exception as e:
-            print(f"❌ Erro ao buscar metas: {e}")
+            logger.error(f"Erro ao buscar metas: {e}")
             return []
     
     def get_goal_by_id(self, goal_id: int):
@@ -100,7 +103,7 @@ class GoalService:
                 goal = session.query(FinancialGoal).filter(FinancialGoal.id == goal_id).first()
                 return goal.to_dict() if goal else None
         except Exception as e:
-            print(f"❌ Erro ao buscar meta: {e}")
+            logger.error(f"Erro ao buscar meta: {e}")
             return None
 
 # Global instance so other modules can import `goal_service` directly.

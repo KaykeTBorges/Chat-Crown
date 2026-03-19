@@ -51,20 +51,28 @@ class FinanceBot:
         self.application.add_handler(CommandHandler("listar", list_transactions_handler))
 
         # --- Edit handlers (edit an existing transaction) ---
-        self.application.add_handler(CallbackQueryHandler(edit_init_handler, pattern="^edit_"))
-        self.application.add_handler(CallbackQueryHandler(edit_choice_handler, pattern="^edit_choice_"))
-        self.application.add_handler(CallbackQueryHandler(edit_cancel_handler, pattern="^edit_cancel$"))
-
-        # Handler that receives the new text value for the edit flow.
-        self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, edit_process_handler))
+        # Use specific regex patterns to avoid collisions between edit_init and edit_choice/edit_cancel.
+        self.application.add_handler(CallbackQueryHandler(edit_choice_handler, pattern=r"^edit_choice_"))
+        self.application.add_handler(CallbackQueryHandler(edit_cancel_handler, pattern=r"^edit_cancel$"))
+        self.application.add_handler(CallbackQueryHandler(edit_init_handler, pattern=r"^edit_\d+$"))
 
         # --- Delete handlers (confirm / cancel delete) ---
-        self.application.add_handler(CallbackQueryHandler(delete_confirm_handler, pattern="^delete_"))
-        self.application.add_handler(CallbackQueryHandler(delete_execute_handler, pattern="^confirm_delete$"))
-        self.application.add_handler(CallbackQueryHandler(delete_cancel_handler, pattern="^cancel_delete$"))
+        self.application.add_handler(CallbackQueryHandler(delete_execute_handler, pattern=r"^confirm_delete$"))
+        self.application.add_handler(CallbackQueryHandler(delete_cancel_handler, pattern=r"^cancel_delete$"))
+        self.application.add_handler(CallbackQueryHandler(delete_confirm_handler, pattern=r"^delete_\d+$"))
 
-        # --- General message handler (register new transactions) ---
-        self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+        # --- Text message handlers ---
+        # edit_process_handler is in group 0 (default), message_handler in group 1.
+        # edit_process_handler checks if an edit is in progress; if not, it does nothing
+        # and the message falls through to group 1 where message_handler picks it up.
+        self.application.add_handler(
+            MessageHandler(filters.TEXT & ~filters.COMMAND, edit_process_handler),
+            group=0,
+        )
+        self.application.add_handler(
+            MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler),
+            group=1,
+        )
 
     def run(self):
         """Start polling for Telegram updates."""

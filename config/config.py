@@ -1,9 +1,5 @@
 # config/config.py
 import os
-from dotenv import load_dotenv
-
-# Load variables from a local `.env` file (if present).
-load_dotenv()
 
 class Config:
     """Central configuration for the Chat Crown application."""

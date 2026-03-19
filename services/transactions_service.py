@@ -1,9 +1,12 @@
 # services/transactions_service.py
+import logging
 import pandas as pd
 from datetime import datetime, timedelta
 from services.database import db_manager
 from models.transaction import Transaction
 from services.ai_processor import ai_processor
+
+logger = logging.getLogger(__name__)
 
 class TransactionsService:
     def __init__(self):
@@ -38,7 +41,7 @@ class TransactionsService:
             with db_manager.get_session() as session:
                 return session.query(Transaction).filter(Transaction.telegram_id == telegram_id).all()
         except Exception as e:
-            print(f"❌ Error while fetching transactions: {e}")
+            logger.error(f"Error while fetching transactions: {e}")
             return []
 
     def create(self, telegram_id: int, description: str, amount: float, category: str, type: str, date, detected_by: str = "manual"):
@@ -58,7 +61,7 @@ class TransactionsService:
                 session.refresh(t)
                 return t
         except Exception as e:
-            print(f"❌ Error while creating transaction: {e}")
+            logger.error(f"Error while creating transaction: {e}")
             return None
 
     def update(self, transaction_id: int, **kwargs):
@@ -73,7 +76,7 @@ class TransactionsService:
                 session.commit()
                 return True
         except Exception as e:
-            print(f"❌ Error while updating transaction: {e}")
+            logger.error(f"Error while updating transaction: {e}")
             return False
 
     def delete(self, transaction_id):
@@ -86,7 +89,7 @@ class TransactionsService:
                     return True
                 return False
         except Exception as e:
-            print(f"❌ Error while deleting transaction: {e}")
+            logger.error(f"Error while deleting transaction: {e}")
             return False
 
     def get_by_id(self, transaction_id: int):
@@ -99,7 +102,7 @@ class TransactionsService:
             with db_manager.get_session() as session:
                 return session.query(Transaction).filter(Transaction.id == transaction_id).first()
         except Exception as e:
-            print(f"❌ Error while fetching transaction by ID: {e}")
+            logger.error(f"Error while fetching transaction by ID: {e}")
             return None
 
     # ---------------- Filters ----------------
